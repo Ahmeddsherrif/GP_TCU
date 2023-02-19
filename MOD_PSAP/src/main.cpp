@@ -103,6 +103,7 @@ int main() {
 					myMobile.Call(eCallPhoneNumber);
 					state = State::IN_CALL;
 					LOG("STATE: ACTIVE > IN_CALL");
+					LOG("============================= IN CALL ================================");
 
 				} else if (event == EVENT_END) {
 					myMobile.sendSMS(eCallPhoneNumber, EVENT_END);
@@ -120,6 +121,8 @@ int main() {
 				if(myMobile.isNoCarrier() || myMobile.isBusy()){
 					state = State::ACTIVE;
 					LOG("STATE: IN_CALL > ACTIVE");
+					LOG("============================= CALL ENDED =============================");
+
 				}
 
 
@@ -127,6 +130,8 @@ int main() {
 					myMobile.Hang();
 					state = State::ACTIVE;
 					LOG("STATE: IN_CALL > ACTIVE");
+					LOG("============================= CALL ENDED =============================");
+
 				}
 			}
 		}

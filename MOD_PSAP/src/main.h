@@ -39,9 +39,6 @@ using namespace std;
 #include "PSAP.h"
 
 
-#include "Event.h"
-
-
 
 enum class State {
 	IDLE,

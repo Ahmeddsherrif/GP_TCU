@@ -4,7 +4,6 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/Event.cpp \
 ../src/Mobile.cpp \
 ../src/PSAP.cpp \
 ../src/Serial.cpp \
@@ -12,7 +11,6 @@ CPP_SRCS += \
 ../src/main.cpp 
 
 CPP_DEPS += \
-./src/Event.d \
 ./src/Mobile.d \
 ./src/PSAP.d \
 ./src/Serial.d \
@@ -20,7 +18,6 @@ CPP_DEPS += \
 ./src/main.d 
 
 OBJS += \
-./src/Event.o \
 ./src/Mobile.o \
 ./src/PSAP.o \
 ./src/Serial.o \
@@ -40,7 +37,7 @@ src/%.o: ../src/%.cpp src/subdir.mk
 clean: clean-src
 
 clean-src:
-	-$(RM) ./src/Event.d ./src/Event.o ./src/Mobile.d ./src/Mobile.o ./src/PSAP.d ./src/PSAP.o ./src/Serial.d ./src/Serial.o ./src/Utilities.d ./src/Utilities.o ./src/main.d ./src/main.o
+	-$(RM) ./src/Mobile.d ./src/Mobile.o ./src/PSAP.d ./src/PSAP.o ./src/Serial.d ./src/Serial.o ./src/Utilities.d ./src/Utilities.o ./src/main.d ./src/main.o
 
 .PHONY: clean-src
 

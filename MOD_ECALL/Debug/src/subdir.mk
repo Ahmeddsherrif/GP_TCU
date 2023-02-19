@@ -5,7 +5,6 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/ECALL.cpp \
-../src/Event.cpp \
 ../src/Mobile.cpp \
 ../src/Serial.cpp \
 ../src/Utilities.cpp \
@@ -13,7 +12,6 @@ CPP_SRCS += \
 
 CPP_DEPS += \
 ./src/ECALL.d \
-./src/Event.d \
 ./src/Mobile.d \
 ./src/Serial.d \
 ./src/Utilities.d \
@@ -21,7 +19,6 @@ CPP_DEPS += \
 
 OBJS += \
 ./src/ECALL.o \
-./src/Event.o \
 ./src/Mobile.o \
 ./src/Serial.o \
 ./src/Utilities.o \
@@ -40,7 +37,7 @@ src/%.o: ../src/%.cpp src/subdir.mk
 clean: clean-src
 
 clean-src:
-	-$(RM) ./src/ECALL.d ./src/ECALL.o ./src/Event.d ./src/Event.o ./src/Mobile.d ./src/Mobile.o ./src/Serial.d ./src/Serial.o ./src/Utilities.d ./src/Utilities.o ./src/main.d ./src/main.o
+	-$(RM) ./src/ECALL.d ./src/ECALL.o ./src/Mobile.d ./src/Mobile.o ./src/Serial.d ./src/Serial.o ./src/Utilities.d ./src/Utilities.o ./src/main.d ./src/main.o
 
 .PHONY: clean-src
 

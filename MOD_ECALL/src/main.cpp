@@ -11,7 +11,9 @@
 
 #define EVENT_ECALL 	"ECALL"
 #define EVENT_END		"END"
+#define EVENT_HANG		"HANG"
 #define EVENT_KILL		"KILL"
+
 
 queue <string> event_queue;
 mutex event_queue_mutex;
@@ -99,6 +101,7 @@ int main() {
 					myMobile.Answer();
 					state = State::IN_CALL;
 					LOG("STATE: ACTIVE > IN_CALL");
+					LOG("=============================== IN CALL ===============================");
 				}
 
 				if(myMobile.isSMSRecieved()){
@@ -127,6 +130,16 @@ int main() {
 				if (myMobile.isNoCarrier() == true) {
 					state = State::ACTIVE;
 					LOG("STATE: IN_CALL > ACTIVE");
+					LOG("============================= CALL ENDED =============================");
+				}
+
+				if(event == EVENT_HANG){
+					myMobile.Hang();
+
+					state = State::ACTIVE;
+					LOG("STATE: IN_CALL > ACTIVE");
+					LOG("============================= CALL ENDED =============================");
+
 				}
 
 				break;

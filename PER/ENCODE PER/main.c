@@ -1,7 +1,5 @@
 #include "encodeper.h"
 
-#include "encodeper.h"
-#include <stdint.h>
 
 uint8_t encodeMSD( tECallMessage *eCallMessage, uint8_t *msdAsByte )
 {

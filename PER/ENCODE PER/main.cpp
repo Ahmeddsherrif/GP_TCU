@@ -1,7 +1,7 @@
 #include "encodeper.h"
 
 int main(){
-encoding s;
+encoding ENC;
 int cnt;
 tECallMessage ECallMessage;
 uint8_t msd[140];
@@ -11,7 +11,7 @@ memset(&ECallMessage, 0, sizeof(ECallMessage));
 memset(msd, 0, sizeof(msd));
 
 ECallMessage=MSD_cfg_data();
-msdsize = s.encodeMSD(&ECallMessage, &msd[0]);
+msdsize = ENC.encodeMSD(&ECallMessage, &msd[0]);
 
 cout<<"MSD["<<unsigned (msdsize)<<"]: ";
 for (cnt = 0; cnt < msdsize; cnt++)

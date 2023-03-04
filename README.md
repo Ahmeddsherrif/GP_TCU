@@ -1,4 +1,4 @@
-# Telematics Control Unit in Modern Vehicles
+# Telematics Control Unit and Driver Safety in Modern Vehicles
 This is our Graduation Project Repository For the year 2023
 
 # Supervisor:
@@ -7,8 +7,13 @@ This is our Graduation Project Repository For the year 2023
 - Eng. Bishoy Wasfey
 
 # Team Members:
+- Abdelrahman Mohamed
 - Ahmed Abdellah
+- Ahmed Abdelmaneam
 - Ahmed Sherif
+- Eslam Waleed
+- Esraa Mohamed
+- Hagar Mohamed
 - Mariam Mostafa
 - Nada Mohamed
 - Samaa Khaled

@@ -1,25 +1,73 @@
-#include "encodeper.h"
+#include <iostream>
+#include <vector>
 
-int main(){
-encoding ENC;
-int cnt;
-tECallMessage ECallMessage;
-uint8_t msd[140];
-uint8_t msdsize;
+class BitStreamEncoder {
+public:
+    BitStreamEncoder() : byte_(0), bit_position_(0) {}
 
-memset(&ECallMessage, 0, sizeof(ECallMessage));
-memset(msd, 0, sizeof(msd));
+    void add_bits(uint8_t value, uint8_t num_bits) {
+        while (num_bits > 0) {
+            uint8_t bits_to_add = std::min(num_bits, uint8_t(8 - bit_position_));
+            byte_ |= (value << bit_position_) & ((1 << bits_to_add) - 1);
+            bit_position_ += bits_to_add;
+            num_bits -= bits_to_add;
 
-ECallMessage=MSD_cfg_data();
-msdsize = ENC.encodeMSD(&ECallMessage, &msd[0]);
+            if (bit_position_ == 8) {
+                bytes_.push_back(byte_);
+                byte_ = 0;
+                bit_position_ = 0;
+            }
+        }
+    }
 
-cout<<"MSD["<<unsigned (msdsize)<<"]: ";
-for (cnt = 0; cnt < msdsize; cnt++)
-printf("%.2X", msd[cnt]);
+    std::vector<uint8_t> get_bytes() const {
+        if (bit_position_ > 0) {
+            bytes_.push_back(byte_);
+        }
+        return bytes_;
+    }
 
-cout<<endl;
+private:
+    std::vector<uint8_t> bytes_;
+    uint8_t byte_;
+    uint8_t bit_position_;
+};
 
+struct S {
+    int a; // 8 bits
+    bool b; // 1 bit
+    double c; // 64 bits
+    char d; // 4 bits
+};
 
-return 0;
+std::vector<uint8_t> encode(const S& s) {
+    BitStreamEncoder encoder;
+
+    encoder.add_bits(s.a, 8);
+    encoder.add_bits(s.b, 1);
+
+    uint64_t c_bits = *reinterpret_cast<const uint64_t*>(&s.c);
+    encoder.add_bits(c_bits >> 56, 8);
+    encoder.add_bits(c_bits >> 48, 8);
+    encoder.add_bits(c_bits >> 40, 8);
+    encoder.add_bits(c_bits >> 32, 8);
+    encoder.add_bits(c_bits >> 24, 8);
+    encoder.add_bits(c_bits >> 16, 8);
+    encoder.add_bits(c_bits >> 8, 8);
+    encoder.add_bits(c_bits, 8);
+
+    encoder.add_bits(s.d, 4);
+
+    return encoder.get_bytes();
 }
 
+int main() {
+    S s = {42, true, 3.14, 'A'};
+    auto bytes = encode(s);
+
+    std::cout << "Encoded bytes: ";
+    for (auto b : bytes) {
+        std::cout << std::hex << static_cast<int>(b) << " ";
+    }
+    std::cout << std::endl;
+}

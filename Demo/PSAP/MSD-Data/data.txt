@@ -1,0 +1,12 @@
+29
+1
+automatic activation 
+true
+accurate position
+passenger vehchile class M1 
+diesel tank
+4
+29.987841448699985
+31.27976245895772
+112455
+3

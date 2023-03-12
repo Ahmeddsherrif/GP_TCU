@@ -1,9 +1,16 @@
-#ifndef MSD_DATA_H_INCLUDED
-#define MSD_DATA_H_INCLUDED
+/*
+ * MSDData.h
+ *
+ *  Created on: Mar 10, 2023
+ *      Author: ahmed
+ */
+
+#ifndef MSDDATA_H_
+#define MSDDATA_H_
 
 
 #define BITS_MSD_ID					8
-#define BITS_VEHICLE_NUMBER			8
+#define BITS_VEHICLE_NUMBER			32
 #define	BITS_ACTIVATION				1
 #define BITS_TEST_CALL				1
 #define BITS_POSITION_TRUSTED		1
@@ -15,6 +22,8 @@
 #define BITS_VEHICLE_DIRECTION		32
 #define BITS_NUMBER_OF_PASSENGERS	3
 
+
+
 enum class tVehiclePropulsionStorageType {
 		GASOLINE_TANK,
 		DIESEL_TANK,
@@ -23,8 +32,8 @@ enum class tVehiclePropulsionStorageType {
 };
 
 struct tVehicleLocation {
-		int32_t positionLatitude;
-		int32_t positionLongitude;
+		float positionLatitude;
+		float positionLongitude;
 };
 
 enum class tVehicleType {
@@ -50,7 +59,7 @@ struct tMSDStructure {
 		uint32_t vehicleDirection;
 		uint32_t numberOfPassengers;
 		uint32_t vehiclenumber;
-		uint32_t timestamp;
+//		char timestamp[25];
 		tVehicleLocation vehicleLocation;
 		tVehiclePropulsionStorageType vehiclePropulsionStorageType;
 		tControlType control;
@@ -58,7 +67,6 @@ struct tMSDStructure {
 
 struct tMSD {
 		tMSDStructure msdStructure;
-		//optional data
 };
 
 struct tECallMessage {
@@ -66,37 +74,5 @@ struct tECallMessage {
 		tMSD msd;
 };
 
-class MSD {
-	public:
-		MSD();
-		void config();
-		void decode(const string&);
-		string encode();
-		void print();
 
-	private:
-		tECallMessage ECallMessage;
-		BitStreamDecoder decoder;
-		BitStreamEncoder encoder;
-
-		static constexpr uint8_t structElementsNumber = 12;
-		static constexpr uint8_t parseSequence[structElementsNumber] = {
-			BITS_MSD_ID,
-			BITS_VEHICLE_NUMBER,
-			BITS_ACTIVATION,
-			BITS_TEST_CALL,
-			BITS_POSITION_TRUSTED,
-			BITS_VEHICLE_TYPE,
-			BITS_PPROPULSION_TYPE,
-			BITS_TIMESTAMP,
-			BITS_LATITUDE,
-			BITS_LONGITUDE,
-			BITS_VEHICLE_DIRECTION,
-			BITS_NUMBER_OF_PASSENGERS
-		};
-		static constexpr uint8_t printWidth = 30;
-		static constexpr char printFillChar = '.';
-
-};
-
-#endif // MSD_DATA_H_INCLUDED
+#endif /* MSDDATA_H_ */

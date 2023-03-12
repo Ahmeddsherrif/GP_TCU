@@ -9,10 +9,7 @@
 
 #include "main.h"
 
-#define EVENT_DIAL  "DIAL"
-#define EVENT_END	"END"
-#define EVENT_HANG	"HANG"
-#define EVENT_KILL	"KILL"
+
 
 queue <string> event_queue;
 mutex event_queue_mutex;
@@ -43,8 +40,6 @@ int main() {
 	Mobile myMobile;
 	myMobile.begin();
 
-	PSAP myPSAP;
-
 	string event;
 	State state = State::IDLE;
 
@@ -59,10 +54,8 @@ int main() {
 		if (event_queue.empty() == false) {
 
 			unique_lock<mutex> lock(event_queue_mutex);
-
 			event = event_queue.front();
 			event_queue.pop();
-
 			lock.unlock();
 
 			LOG("EVENT: " << event);
@@ -85,10 +78,11 @@ int main() {
 					eCallPhoneNumber = parsedString[1];
 
 					cout << "\n\n" << "An MSD Received From [" << eCallPhoneNumber << "] : " << endl;
+					MSDDecoder msd;
+					msd.decode(SMS_Data[1]);
+					msd.log(PSAP_LOG_FILE_PATH);
+					msd.print();
 
-					myPSAP.extractMSDfromString(SMS_Data[1]);
-					myPSAP.printMSD();
-					myPSAP.logMSD();
 
 					state = State::ACTIVE;
 					LOG("STATE: IDLE > ACTIVE");

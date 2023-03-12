@@ -5,6 +5,10 @@
 #include <sys/msg.h>
 #include <unistd.h>
 
+
+#define MSG_QUEUE_NAME "ECALL_PROCESS_QUEUE"
+#define MSG_QUEUE_KEY   0
+
 #define MAX_MSG_SIZE 1024
 #define MSG_TYPE 1
 
@@ -16,7 +20,7 @@ int init() {
     int msgid;
 
     // Generate a unique key for the message queue
-    key = ftok("thisISaUniqueString", 'A');
+    key = ftok(MSG_QUEUE_NAME, MSG_QUEUE_KEY);
 
     // Create a message queue
     msgid = msgget(key, 0666 | IPC_CREAT);

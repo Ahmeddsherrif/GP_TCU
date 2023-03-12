@@ -38,7 +38,7 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := MOD_PSAP
+BUILD_ARTIFACT_NAME := PSAP-Process
 BUILD_ARTIFACT_EXTENSION :=
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
@@ -49,19 +49,19 @@ BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ART
 all: main-build
 
 # Main-build Target
-main-build: MOD_PSAP
+main-build: PSAP-Process
 
 # Tool invocations
-MOD_PSAP: $(OBJS) $(USER_OBJS) makefile $(OPTIONAL_TOOL_DEPS)
+PSAP-Process: $(OBJS) $(USER_OBJS) makefile $(OPTIONAL_TOOL_DEPS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++  -o "MOD_PSAP" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++  -o "PSAP-Process" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) MOD_PSAP
+	-$(RM) PSAP-Process
 	-@echo ' '
 
 .PHONY: all clean dependents main-build

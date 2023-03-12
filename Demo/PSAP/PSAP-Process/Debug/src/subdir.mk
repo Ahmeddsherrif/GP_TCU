@@ -4,22 +4,25 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/BitStreamDecoder.cpp \
+../src/MSDDecoder.cpp \
 ../src/Mobile.cpp \
-../src/PSAP.cpp \
 ../src/Serial.cpp \
 ../src/Utilities.cpp \
 ../src/main.cpp 
 
 CPP_DEPS += \
+./src/BitStreamDecoder.d \
+./src/MSDDecoder.d \
 ./src/Mobile.d \
-./src/PSAP.d \
 ./src/Serial.d \
 ./src/Utilities.d \
 ./src/main.d 
 
 OBJS += \
+./src/BitStreamDecoder.o \
+./src/MSDDecoder.o \
 ./src/Mobile.o \
-./src/PSAP.o \
 ./src/Serial.o \
 ./src/Utilities.o \
 ./src/main.o 
@@ -37,7 +40,7 @@ src/%.o: ../src/%.cpp src/subdir.mk
 clean: clean-src
 
 clean-src:
-	-$(RM) ./src/Mobile.d ./src/Mobile.o ./src/PSAP.d ./src/PSAP.o ./src/Serial.d ./src/Serial.o ./src/Utilities.d ./src/Utilities.o ./src/main.d ./src/main.o
+	-$(RM) ./src/BitStreamDecoder.d ./src/BitStreamDecoder.o ./src/MSDDecoder.d ./src/MSDDecoder.o ./src/Mobile.d ./src/Mobile.o ./src/Serial.d ./src/Serial.o ./src/Utilities.d ./src/Utilities.o ./src/main.d ./src/main.o
 
 .PHONY: clean-src
 

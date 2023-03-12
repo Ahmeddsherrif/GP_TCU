@@ -6,6 +6,7 @@
 CPP_SRCS += \
 ../src/GPSSensor.cpp \
 ../src/GyroscopeSensor.cpp \
+../src/MessageQueue.cpp \
 ../src/SensorFile.cpp \
 ../src/SpeedometerSensor.cpp \
 ../src/main.cpp 
@@ -13,6 +14,7 @@ CPP_SRCS += \
 CPP_DEPS += \
 ./src/GPSSensor.d \
 ./src/GyroscopeSensor.d \
+./src/MessageQueue.d \
 ./src/SensorFile.d \
 ./src/SpeedometerSensor.d \
 ./src/main.d 
@@ -20,6 +22,7 @@ CPP_DEPS += \
 OBJS += \
 ./src/GPSSensor.o \
 ./src/GyroscopeSensor.o \
+./src/MessageQueue.o \
 ./src/SensorFile.o \
 ./src/SpeedometerSensor.o \
 ./src/main.o 
@@ -37,7 +40,7 @@ src/%.o: ../src/%.cpp src/subdir.mk
 clean: clean-src
 
 clean-src:
-	-$(RM) ./src/GPSSensor.d ./src/GPSSensor.o ./src/GyroscopeSensor.d ./src/GyroscopeSensor.o ./src/SensorFile.d ./src/SensorFile.o ./src/SpeedometerSensor.d ./src/SpeedometerSensor.o ./src/main.d ./src/main.o
+	-$(RM) ./src/GPSSensor.d ./src/GPSSensor.o ./src/GyroscopeSensor.d ./src/GyroscopeSensor.o ./src/MessageQueue.d ./src/MessageQueue.o ./src/SensorFile.d ./src/SensorFile.o ./src/SpeedometerSensor.d ./src/SpeedometerSensor.o ./src/main.d ./src/main.o
 
 .PHONY: clean-src
 

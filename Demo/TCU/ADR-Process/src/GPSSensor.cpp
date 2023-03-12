@@ -28,20 +28,26 @@ GPSLocation GPSSensor::getGPS(const int &sampleNumber) {
 	return tempGPS;
 }
 
-ostream& operator<<(ostream &os, const GPSReading &gps) {
-	os << gps.Location.latitude << "," << gps.Location.longitude;
 
+string getGPSString(const GPSReading &gps) {
+
+    string rtnGPSReading;
 	switch (gps.Status) {
 		case (GPSStatus::AVAILABLE): {
-			os << ",AVAILABLE";
+			rtnGPSReading  = "AVAILABLE";
 			break;
 		}
 
 		case (GPSStatus::UNAVALIABLE): {
-			os << ",OUTAGE";
+			rtnGPSReading = "OUTAGE";
 			break;
 		}
 	}
-	return os;
+	rtnGPSReading += ",";
+
+
+	rtnGPSReading += to_string(gps.Location.latitude) + "," + to_string(gps.Location.longitude);
+
+	return rtnGPSReading;
 }
 

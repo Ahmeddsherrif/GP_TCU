@@ -24,7 +24,8 @@ struct GPSReading{
 		GPSStatus Status;
 };
 
-ostream& operator<<(ostream& os, const GPSReading& gps);
+
+string getGPSString(const GPSReading &gps);
 
 class GPSSensor : public SensorFile {
 	public:

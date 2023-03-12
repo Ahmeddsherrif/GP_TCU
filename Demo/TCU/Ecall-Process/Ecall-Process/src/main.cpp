@@ -6,106 +6,85 @@
 // Description : Hello World in C++, Ansi-style
 //============================================================================
 
-
 #include "main.h"
 
-
-
-
-#define MAX_MSG_SIZE 1024
-#define MSG_TYPE 1
-
-// Function to initialize the message queue
-int init() {
-    key_t key;
-    int msgid;
-
-    // Generate a unique key for the message queue
-    key = ftok("thisISaUniqueString", 'A');
-
-    // Create a message queue
-    msgid = msgget(key, 0666 | IPC_CREAT);
-    if (msgid == -1) {
-        cerr << "Failed to create message queue" << endl;
-        return -1;
-    }
-
-    return msgid;
-}
-
-// Function to receive a message
-string receive(int msgid) {
-    const int BUFF_SIZE = 100;
-    char buff[BUFF_SIZE];
-
-    // Receive the message
-    msgrcv(msgid, &buff, BUFF_SIZE, 0, 0);
-
-    string x = buff;
-    return x;
-}
-
-#define EVENT_ECALL 	"ECALL"
-#define EVENT_END		"END"
-#define EVENT_HANG		"HANG"
-#define EVENT_KILL		"KILL"
-
-
-queue <string> event_queue;
+queue<string> event_queue;
 mutex event_queue_mutex;
 
-
+mutex isDone_mutex;
 bool isDone = false;
 
-void task() {
+GPSReading currentGPSReading;
 
-	int msgid = init();
-	if (msgid == -1) {
-		return;
-	}
-
+void IPC_Thread() {
+	MessageQueue thisProcessMessageQueue(ECALL_PROCESS_MSGQ, ECALL_PROCESS_MSGQ_KEY);
 	string event;
-	while (isDone == false) {
-		event = receive(msgid);
+	int messageID = 0;
 
-		if (event == EVENT_KILL) {
-			isDone = true;
+	while (true) {
+
+		unique_lock<mutex> isDone_mutexLock(isDone_mutex);
+		if (isDone == true) {
+			break;
+		}
+		isDone_mutexLock.unlock();
+
+		thisProcessMessageQueue.waitForMessage();
+
+		event = thisProcessMessageQueue.getLatestMessageString();
+		messageID = thisProcessMessageQueue.getLatestMessageID();
+
+		LOG("EVENT RECIEVED : " << event);
+
+		switch (messageID) {
+			case 1: {
+				if (event == EVENT_KILL) {
+					unique_lock<mutex> isDone_mutexLock(isDone_mutex);
+					isDone = true;
+					isDone_mutexLock.unlock();
+				}
+
+				break;
+			}
+			case 2: {
+				string currentGPSReadingString = event;
+				vector<string> parsedGPSReading;
+				Utilities::parseCommaSepratedString(currentGPSReadingString, parsedGPSReading);
+
+				currentGPSReading.Status = parsedGPSReading[0];
+				currentGPSReading.Location.latitude = stof(parsedGPSReading[1]);
+				currentGPSReading.Location.longitude = stof(parsedGPSReading[2]);
+
+				break;
+			}
+			case 3: {
+				unique_lock<mutex> lock(event_queue_mutex);
+				event_queue.push(event);
+				lock.unlock();
+				break;
+			}
 		}
 
-		unique_lock<mutex> lock(event_queue_mutex);
-		event_queue.push(event);
-		lock.unlock();
 	}
-
-	// Delete the message queue
-	if (msgctl(msgid, IPC_RMID, NULL) == -1) {
-		cerr << "Failed to delete message queue" << endl;
-		return;
-	}
-	cout << "Message queue deleted" << endl;
 }
-
-
 
 int main() {
 
-	thread t1(task);
+	thread t1(IPC_Thread);
 
 	Mobile myMobile;
 	myMobile.begin();
 
-	ECALL myECALL;
-	myECALL.init();
-
 	string event;
 	State state = State::IDLE;
 
-	vector <string> SMS_Data;
-	vector <string> parsedString;
+	while (true) {
 
-
-
-	while (isDone == false) {
+		unique_lock<mutex> isDone_mutexLock(isDone_mutex);
+		if (isDone == true) {
+			break;
+		}
+		isDone_mutexLock.unlock();
 
 		if (event_queue.empty() == false) {
 
@@ -122,19 +101,40 @@ int main() {
 			event = "";
 		}
 
-
-
-
 		switch (state) {
 			case State::IDLE: {
 				myMobile.PollLine();
 
-				if(myMobile.isRinging() == true){
+				if (myMobile.isRinging() == true) {
 					myMobile.Hang();
 				}
 
 				if (event == EVENT_ECALL) {
-					myMobile.sendSMS(myECALL.getEmergencyPhoneNumber(), myECALL.getMSD());
+					MSDEncoder msd("/home/ahmed/Desktop/ECALL_MSD_Config");
+
+					msd.setActivation(false);
+					msd.setTestCall(true);
+
+					msd.setPositionLatitude(currentGPSReading.Location.latitude);
+					msd.setPositionLongitude(currentGPSReading.Location.longitude);
+
+					if (currentGPSReading.Status == "AVAILABLE") {
+						msd.setPositionTrust(true);
+
+					}
+
+					else if (currentGPSReading.Status == "OUTAGE") {
+						msd.setPositionTrust(false);
+
+					}
+
+					msd.setVehicleDirection(50);
+					msd.setNumberOfPassengers(4);
+
+					string encodedMSDString = msd.encode();
+					string emergencyPhoneNumber = msd.getEmergencyPhoneNumber();
+					myMobile.sendSMS(emergencyPhoneNumber, encodedMSDString);
+
 					state = State::ACTIVE;
 					LOG("STATE: IDLE > ACTIVE");
 				}
@@ -146,16 +146,20 @@ int main() {
 
 				myMobile.PollLine();
 
-				if(myMobile.isRinging() == true){
+				if (myMobile.isRinging() == true) {
 					myMobile.Answer();
 					state = State::IN_CALL;
 					LOG("STATE: ACTIVE > IN_CALL");
 					LOG("=============================== IN CALL ===============================");
 				}
 
-				if(myMobile.isSMSRecieved()){
+				if (myMobile.isSMSRecieved()) {
+					vector<string> SMS_Data;
+					vector<string> parsedString;
+
 					myMobile.readLatestSMS(SMS_Data);
-					if(SMS_Data[1] == EVENT_END){
+
+					if (SMS_Data[1] == EVENT_END) {
 						state = State::IDLE;
 						LOG("STATE: ACTIVE > IDLE");
 
@@ -163,14 +167,13 @@ int main() {
 				}
 
 				// For test Purposes Only
-				if(event == EVENT_END){
+				if (event == EVENT_END) {
 					state = State::IDLE;
 					LOG("STATE: ACTIVE > IDLE");
 				}
 
 				break;
 			}
-
 
 			case State::IN_CALL: {
 
@@ -182,7 +185,7 @@ int main() {
 					LOG("============================= CALL ENDED =============================");
 				}
 
-				if(event == EVENT_HANG){
+				if (event == EVENT_HANG) {
 					myMobile.Hang();
 
 					state = State::ACTIVE;
@@ -194,8 +197,6 @@ int main() {
 				break;
 			}
 		}
-
-
 
 	}
 

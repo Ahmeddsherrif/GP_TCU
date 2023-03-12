@@ -38,10 +38,34 @@ using namespace std;
 #include "Utilities.h"
 #include "debug.h"
 
+#include "MessageQueue.h"
+
+#include "MSDData.h"
+#include "BitStreamEncoder.h"
+#include "MSDEncoder.h"
 
 #include "Serial.h"
 #include "Mobile.h"
-#include "ECALL.h"
+
+#define EVENT_ECALL 	"ECALL"
+#define EVENT_END		"END"
+#define EVENT_HANG		"HANG"
+#define EVENT_KILL		"KILL"
+
+
+
+struct GPSLocation {
+		float latitude; // in degrees
+		float longitude; // in degrees
+		//double horizontalAccuracy;
+};
+
+
+
+struct GPSReading{
+		GPSLocation Location;
+		string Status;
+};
 
 
 

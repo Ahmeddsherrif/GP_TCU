@@ -54,30 +54,6 @@ double calculateQueueDifference(queue<double>& angle_queue) {
 }
 
 
-//string getTimestamp() {
-//
-//	// Get the current time point
-//	auto now = chrono::system_clock::now();
-//
-//	// Convert the time point to a time_t object
-//	auto currentTime = chrono::system_clock::to_time_t(now);
-//
-//	// Extract the microseconds from the time point
-//	auto microseconds = chrono::duration_cast<chrono::microseconds>(now.time_since_epoch()) % 1000000;
-//
-//	// Convert the time_t object to a local time struct
-//	tm *localTime = localtime(&currentTime);
-//
-//	// Format the timestamp string
-//	char timestamp[100];
-//	strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", localTime);
-//
-//	// Append the microseconds to the string
-//	sprintf(timestamp, "%s.%06d", timestamp, static_cast<int>(microseconds.count()));
-//
-//	return string(timestamp);
-//}
-
 double sumQueue(queue<double> &q) {
 	double sum = 0.0;
 
@@ -95,10 +71,85 @@ double sumQueue(queue<double> &q) {
 	return sum;
 }
 
+
+
+
+
+
 mutex isThreadStarted_mutex;
-condition_variable cv;
+condition_variable isThreadStarted_conditionVariable;
 bool isThreadStarted = false;
+
+
+mutex isProgramFinished_mutex;
 bool isProgramFinished = false;
+
+
+enum class GPSThreadEvent_t{
+		NO_OUTAGE,
+		OUTAGE
+};
+
+GPSThreadEvent_t GPSThreadEvent = GPSThreadEvent_t::NO_OUTAGE;
+mutex GPSThreadEventMutex;
+
+
+enum class ADRThreadEvent_t{
+		HALT,
+		START
+};
+ADRThreadEvent_t ADRThreadEvent = ADRThreadEvent_t::HALT;
+mutex ADRThreadEventMutex;
+
+
+
+void IPC_thread(){
+	string event;
+	MessageQueue thisProcessesMessageQueue(ADR_PROCESS_MSGQ, ADR_PROCESS_MSGQ_KEY);
+	while(true){
+
+		unique_lock<mutex> isProgramFinished_mutexLock(isProgramFinished_mutex);
+		if(isProgramFinished == true){
+			break;
+		}
+		isProgramFinished_mutexLock.unlock();
+
+		LOG("WAITING FOR EVENT....");
+		thisProcessesMessageQueue.waitForMessage();
+		event = thisProcessesMessageQueue.getLatestMessageString();
+		LOG("EVENT RECIEVED: " << event);
+
+		if (event == "KILL") {
+			unique_lock<mutex> isProgramFinished_mutexLock(isProgramFinished_mutex);
+			isProgramFinished = true;
+			isProgramFinished_mutexLock.unlock();
+		}
+
+		else if (event == "OUTAGE") {
+			unique_lock<mutex> GPSThreadEventMutexLock(GPSThreadEventMutex);
+			GPSThreadEvent = GPSThreadEvent_t::OUTAGE;
+			GPSThreadEventMutexLock.unlock();
+		}
+
+		else if (event == "NO_OUTAGE") {
+			unique_lock<mutex> GPSThreadEventMutexLock(GPSThreadEventMutex);
+			GPSThreadEvent = GPSThreadEvent_t::NO_OUTAGE;
+			GPSThreadEventMutexLock.unlock();
+		}
+
+
+		//TODO: Make a condition variable for all thread synchronization
+		else if (event == "START") {
+			unique_lock<mutex> ADRThreadEventQueueMutexLock(ADRThreadEventMutex);
+			ADRThreadEvent = ADRThreadEvent_t::START;
+			ADRThreadEventMutex.unlock();
+		}
+
+
+	}
+
+}
+
 
 queue<double> speedometerSensorReadings_queue;
 mutex speedometerSensorReadings_queueMutex;
@@ -106,7 +157,8 @@ constexpr int speedometerSampleRate = 4;	//40;
 constexpr int maxSpeedSampleChange = 3;
 void SpeedometerSensor_thread() {
 
-	SpeedometerSensor speedometer("/home/ahmed/Desktop/ADR-DATA/Speedx.csv");
+	string fileName = string(DATA_DIR) + string("Speedx.csv");
+	SpeedometerSensor speedometer(fileName);
 	int sampleNumber = 0;
 	const int maxSampleNumber = speedometer.getNumberOfSamples() - 1;
 	double currentSpeedSample;
@@ -114,7 +166,7 @@ void SpeedometerSensor_thread() {
 
 	unique_lock<mutex> isThreadStarted_mutexLock(isThreadStarted_mutex);
 	while (!isThreadStarted) {
-		cv.wait(isThreadStarted_mutexLock);
+		isThreadStarted_conditionVariable.wait(isThreadStarted_mutexLock);
 	}
 	isThreadStarted_mutexLock.unlock();
 
@@ -124,7 +176,13 @@ void SpeedometerSensor_thread() {
 	// Define the next time the loop should start
 	auto nextLoopTime = startTime + milliseconds(speedometerSampleRate);
 
-	while (isProgramFinished == false) {
+	while (true) {
+
+		unique_lock<mutex> isProgramFinished_mutexLock(isProgramFinished_mutex);
+		if (isProgramFinished == true) {
+			break;
+		}
+		isProgramFinished_mutexLock.unlock();
 
 		// Data Acquisition
 		currentSpeedSample = speedometer.getSpeed(sampleNumber);
@@ -143,7 +201,12 @@ void SpeedometerSensor_thread() {
 		sampleNumber++;
 
 		if (sampleNumber >= maxSampleNumber) {
-			isProgramFinished = true;
+//			unique_lock<mutex> isProgramFinished_mutexLock(isProgramFinished_mutex);
+//			isProgramFinished = true;
+//			isProgramFinished_mutexLock.unlock();
+
+			LOG("Speedometer Thread Ended");
+			break;
 		}
 
 		// Sleep until the next loop period
@@ -159,7 +222,8 @@ mutex gpsSensorReadings_queueMutex;
 constexpr int gpsSampleRate = 100;	//1000;
 void GPSSensor_thread() {
 
-	GPSSensor gps("/home/ahmed/Desktop/ADR-DATA/Positionx.csv");
+	string fileName = string(DATA_DIR) + string("Positionx.csv");
+	GPSSensor gps(fileName);
 	int sampleNumber = 0;
 	const int maxSampleNumber = gps.getNumberOfSamples() - 1;
 	GPSLocation currentGPSSample;
@@ -168,23 +232,41 @@ void GPSSensor_thread() {
 
 	unique_lock<mutex> isThreadStarted_mutexLock(isThreadStarted_mutex);
 	while (!isThreadStarted) {
-		cv.wait(isThreadStarted_mutexLock);
+		isThreadStarted_conditionVariable.wait(isThreadStarted_mutexLock);
 	}
 	isThreadStarted_mutexLock.unlock();
 
+	string event;
+
+	GPSThreadEvent_t currentGPSThreadEvent;
 	// Define the start time of the loop
 	auto startTime = high_resolution_clock::now();
 
 	// Define the next time the loop should start
 	auto nextLoopTime = startTime + milliseconds(gpsSampleRate);
 
-	while (isProgramFinished == false) {
+	while (true) {
 
-		// Data Manipulation -- To Simulate an Outage   10/120
-		if ((sampleNumber > 10 && sampleNumber < 100 )||(sampleNumber > 200 && sampleNumber < 400 ) ||(sampleNumber > 500 && sampleNumber < 600 )) {
-			currentGPSStatus = GPSStatus::UNAVALIABLE;
-		} else {
-			currentGPSStatus = GPSStatus::AVAILABLE;
+		unique_lock<mutex> isProgramFinished_mutexLock(isProgramFinished_mutex);
+		if (isProgramFinished == true) {
+			break;
+		}
+		isProgramFinished_mutexLock.unlock();
+
+
+		unique_lock<mutex> GPSThreadEventMutexLock(GPSThreadEventMutex);
+		currentGPSThreadEvent = GPSThreadEvent;
+		GPSThreadEventMutexLock.unlock();
+
+		switch (currentGPSThreadEvent) {
+			case (GPSThreadEvent_t::OUTAGE): {
+				currentGPSStatus = GPSStatus::UNAVALIABLE;
+				break;
+			}
+			case (GPSThreadEvent_t::NO_OUTAGE): {
+				currentGPSStatus = GPSStatus::AVAILABLE;
+				break;
+			}
 		}
 
 		// Data Acquisition
@@ -199,7 +281,11 @@ void GPSSensor_thread() {
 		sampleNumber++;
 
 		if (sampleNumber >= maxSampleNumber) {
-			isProgramFinished = true;
+//			unique_lock<mutex> isProgramFinished_mutexLock(isProgramFinished_mutex);
+//			isProgramFinished = true;
+//			isProgramFinished_mutexLock.unlock();
+			LOG("GPS Thread Ended");
+			break;
 		}
 
 		// Sleep until the next loop period
@@ -216,14 +302,15 @@ constexpr int gyroSampleRate = 1;	//10;
 constexpr double gyroStaticBias = 0;
 void GyroSensor_thread() {
 
-	GyroscopeSensor gyro("/home/ahmed/Desktop/ADR-DATA/Orientationx.csv");
+	string fileName = string(DATA_DIR) + string("Orientationx.csv");
+	GyroscopeSensor gyro(fileName);
 	int sampleNumber = 0;
 	const int maxSampleNumber = gyro.getNumberOfSamples() - 1;
 	double currentGyroSample;
 
 	unique_lock<mutex> isThreadStarted_mutexLock(isThreadStarted_mutex);
 	while (!isThreadStarted) {
-		cv.wait(isThreadStarted_mutexLock);
+		isThreadStarted_conditionVariable.wait(isThreadStarted_mutexLock);
 	}
 	isThreadStarted_mutexLock.unlock();
 
@@ -233,7 +320,13 @@ void GyroSensor_thread() {
 	// Define the next time the loop should start
 	auto nextLoopTime = startTime + milliseconds(gyroSampleRate);
 
-	while (isProgramFinished == false) {
+	while (true) {
+
+		unique_lock<mutex> isProgramFinished_mutexLock(isProgramFinished_mutex);
+		if (isProgramFinished == true) {
+			break;
+		}
+		isProgramFinished_mutexLock.unlock();
 
 		// Data Acquisition
 		currentGyroSample = gyro.getYawRate(sampleNumber);
@@ -245,7 +338,11 @@ void GyroSensor_thread() {
 		sampleNumber++;
 
 		if (sampleNumber >= maxSampleNumber) {
-			isProgramFinished = true;
+//			unique_lock<mutex> isProgramFinished_mutexLock(isProgramFinished_mutex);
+//			isProgramFinished = true;
+//			isProgramFinished_mutexLock.unlock();
+			LOG("Gyro Thread Ended");
+			break;
 		}
 
 		// Sleep until the next loop period
@@ -260,11 +357,32 @@ enum class State {
 	GPS_ON, GPS_OFF
 };
 
+
+
+
 int main() {
+
+	thread t1(IPC_thread);
+
+	LOG("WAITING FOR START EVENT");
+	while (true) {
+		unique_lock<mutex> ADRThreadEventMutexLock(ADRThreadEventMutex);
+		if(ADRThreadEvent == ADRThreadEvent_t::START){
+			break;
+		}
+		ADRThreadEventMutexLock.unlock();
+
+		this_thread::sleep_for(seconds(1));
+	}
+	LOG("PROGRAM STARTED ...");
+
+
 
 	// iomanip
 	cout << fixed << setprecision(6);
-	cout << "TrueBearing,EstimatedBearing,latitude,Longitude,Status" << endl;
+	cout << "Status,latitude,Longitude,SecondsSinceOutage" << endl;
+
+	GPSReading currentADRReading;
 
 	double averageSpeed;
 	double averageYawRate;
@@ -273,9 +391,6 @@ int main() {
 	double currentEstimatedDistance = 0.0;
 	double currentEstimatedBearingAngle = 0.0;
 	GPSLocation currentEstimatedGPSLocation = { 0.0, 0.0 };
-	GPSReading currentADRReading;
-	double previousEstimatedBearingAngle = 0.0;
-	double deltaEstimatedBearingAngle;
 
 	//True Variables
 	GPSReading currentGPSReading;
@@ -284,24 +399,42 @@ int main() {
 	GPSLocation previousTrueGPSSample = { 0, 0 };
 	bool newGPSReadingFlag = false;
 	double currentTrueBearingAngle = 0.0;
-	double previousTrueBearingAngle = 0.0;
-	double deltaTrueBearingAngle;
+
+
+
+	MessageQueue communicationMangerMsgQ(COMM_PROCESS_MSGQ, COMM_PROCESS_MSGQ_KEY);
 
 	State state = State::GPS_ON;
 
-	thread t1(GPSSensor_thread);
+
 	thread t2(SpeedometerSensor_thread);
 	thread t3(GyroSensor_thread);
+	thread t4(GPSSensor_thread);
 
 	//Wait until all threads initialize and block
 	this_thread::sleep_for(seconds(1));
 
 	unique_lock<mutex> isThreadStarted_mutexLock(isThreadStarted_mutex);
 	isThreadStarted = true;
-	cv.notify_all();
+	isThreadStarted_conditionVariable.notify_all();
 	isThreadStarted_mutexLock.unlock();
 
-	while (isProgramFinished == false) {
+	int secondsSinceOutage = 0;
+	while (true) {
+
+		unique_lock<mutex> isProgramFinished_mutexLock(isProgramFinished_mutex);
+		if (isProgramFinished == true) {
+			Message message;
+
+			memset(&message, 0, sizeof(message));
+
+			message.id = 11;
+			strcpy(message.data, getGPSString(currentADRReading).c_str());
+			communicationMangerMsgQ.sendMessage(message);
+			this_thread::sleep_for(seconds(1000));
+			break;
+		}
+		isProgramFinished_mutexLock.unlock();
 
 		unique_lock<mutex> gpsSensorReadingsQueue_MutexLock(gpsSensorReadings_queueMutex);
 		if (gpsSensorReadings_queue.empty() == false) {
@@ -318,7 +451,6 @@ int main() {
 			}
 
 			currentADRReading.Status = currenGPSStatus;
-
 		}
 		gpsSensorReadingsQueue_MutexLock.unlock();
 
@@ -341,25 +473,25 @@ int main() {
 			currentTrueBearingAngle = calculateBearingAngle(previousTrueGPSSample, currentTrueGPSSample);
 			previousTrueGPSSample = currentTrueGPSSample;
 
-			deltaTrueBearingAngle = currentTrueBearingAngle - previousTrueBearingAngle;
-			previousTrueBearingAngle = currentTrueBearingAngle;
+
 
 			switch (state) {
 				case (State::GPS_ON): {
-
+					secondsSinceOutage = 0;
 					currentEstimatedBearingAngle = currentTrueBearingAngle;
 					currentEstimatedGPSLocation = currentTrueGPSSample;
-
 					currentADRReading.Location = currentTrueGPSSample;
+
 
 					break;
 				}
 				case (State::GPS_OFF): {
-
+					secondsSinceOutage++;
 					currentEstimatedDistance = KMH_TO_MS(averageSpeed) * MILLISECONDS_TO_SECONDS((double )40);
 					currentEstimatedBearingAngle += averageYawRate;
 					currentEstimatedGPSLocation = calculateDeadReckoningGPS(currentEstimatedGPSLocation, currentEstimatedDistance,
-							currentEstimatedBearingAngle);
+					currentEstimatedBearingAngle);
+
 
 					currentADRReading.Location = currentEstimatedGPSLocation;
 
@@ -367,10 +499,10 @@ int main() {
 				}
 			}
 
-			deltaEstimatedBearingAngle = currentEstimatedBearingAngle - previousEstimatedBearingAngle;
-			previousEstimatedBearingAngle = currentEstimatedBearingAngle;
 
-			cout << currentADRReading << endl;
+
+			cout << getGPSString(currentADRReading) <<"," << secondsSinceOutage << " seconds"<< endl;
+
 
 		}
 	}
@@ -378,6 +510,7 @@ int main() {
 	t1.join();
 	t2.join();
 	t3.join();
+	t4.join();
 
 	return 0;
 }

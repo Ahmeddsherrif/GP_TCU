@@ -4,21 +4,27 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/ECALL.cpp \
+../src/BitStreamEncoder.cpp \
+../src/MSDEncoder.cpp \
+../src/MessageQueue.cpp \
 ../src/Mobile.cpp \
 ../src/Serial.cpp \
 ../src/Utilities.cpp \
 ../src/main.cpp 
 
 CPP_DEPS += \
-./src/ECALL.d \
+./src/BitStreamEncoder.d \
+./src/MSDEncoder.d \
+./src/MessageQueue.d \
 ./src/Mobile.d \
 ./src/Serial.d \
 ./src/Utilities.d \
 ./src/main.d 
 
 OBJS += \
-./src/ECALL.o \
+./src/BitStreamEncoder.o \
+./src/MSDEncoder.o \
+./src/MessageQueue.o \
 ./src/Mobile.o \
 ./src/Serial.o \
 ./src/Utilities.o \
@@ -37,7 +43,7 @@ src/%.o: ../src/%.cpp src/subdir.mk
 clean: clean-src
 
 clean-src:
-	-$(RM) ./src/ECALL.d ./src/ECALL.o ./src/Mobile.d ./src/Mobile.o ./src/Serial.d ./src/Serial.o ./src/Utilities.d ./src/Utilities.o ./src/main.d ./src/main.o
+	-$(RM) ./src/BitStreamEncoder.d ./src/BitStreamEncoder.o ./src/MSDEncoder.d ./src/MSDEncoder.o ./src/MessageQueue.d ./src/MessageQueue.o ./src/Mobile.d ./src/Mobile.o ./src/Serial.d ./src/Serial.o ./src/Utilities.d ./src/Utilities.o ./src/main.d ./src/main.o
 
 .PHONY: clean-src
 

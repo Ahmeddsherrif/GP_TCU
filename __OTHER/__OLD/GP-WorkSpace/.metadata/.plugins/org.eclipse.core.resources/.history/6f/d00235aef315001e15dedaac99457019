@@ -1,0 +1,34 @@
+/*
+ * ADR.h
+ *
+ *  Created on: Jun 28, 2023
+ *      Author: ahmed
+ */
+
+#ifndef ADR_H_
+#define ADR_H_
+
+class ADR {
+public:
+	static string getADR_GPS(queue<double> &speedQueue, queue<double> &gyroQueue, queue<GPSLocation> &gpsQueue, outageStatus outage);
+private:
+	GPSReading currentADRReading;
+
+	double averageSpeed;
+	double averageYawRate;
+
+	//Estimated Variables
+	double currentEstimatedDistance = 0.0;
+	double currentEstimatedBearingAngle = 0.0;
+	GPSLocation currentEstimatedGPSLocation = { 0.0, 0.0 };
+
+	//True Variables
+	GPSStatus currenGPSStatus = GPSStatus::AVAILABLE;
+	GPSLocation currentTrueGPSSample = { 0, 0 };
+	GPSLocation previousTrueGPSSample = { 0, 0 };
+	double currentTrueBearingAngle = 0.0;
+
+	int secondsSinceLastOutage = 0;
+};
+
+#endif /* ADR_H_ */

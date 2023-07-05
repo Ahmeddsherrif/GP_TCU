@@ -1,0 +1,114 @@
+#include "main.h"
+
+bool isActive = false;
+
+void on_connect(struct mosquitto *mosq, void *obj, int rc) {
+
+	if (rc) {
+		printf("Error with result code: %d\n", rc);
+		exit(-1);
+	}
+
+	mosquitto_subscribe(mosq, NULL, TOPIC_ADR, 0);
+	mosquitto_subscribe(mosq, NULL, TOPIC_CMD, 0);
+}
+
+void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg) {
+	if (strcmp(msg->topic, TOPIC_CMD) == 0) {
+		if (strcmp((char*) msg->payload, MESSAGE_START) == 0) {
+			isActive = true;
+		}
+		else if (strcmp((char*) msg->payload, MESSAGE_KILL) == 0) {
+			isActive = false;
+		}
+	}
+}
+
+int main() {
+
+	int rc;
+
+	mosquitto_lib_init();
+
+	struct mosquitto *mosq;
+
+	mosq = mosquitto_new(NULL, true, NULL);
+	mosquitto_connect_callback_set(mosq, on_connect);
+	mosquitto_message_callback_set(mosq, on_message);
+
+	rc = mosquitto_connect(mosq, "localhost", 1883, 10);
+	if (rc) {
+		printf("Could not connect to Broker with return code %d\n", rc);
+		return -1;
+	}
+
+	mosquitto_loop_start(mosq);
+
+	while (isActive == false) {
+		cout << "Waiting ..." << endl;
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
+
+	while (isActive == true) {
+		unique_lock < mutex > lockMutexCurrentMainEvent(mutexCurrentMainEvent);
+		switch (currentMainEvent) {
+			case EVENT_IDLE: {
+				/*DO NOTHING*/
+				break;
+			}
+			case EVENT_NEW_GPS_SAMPLE: {
+				currentMainEvent = EVENT_IDLE;
+				currentMainState = STATE_PROCESS_GPS_SAMPLE;
+				break;
+			}
+		}
+		lockMutexCurrentMainEvent.unlock();
+
+		switch (currentMainState) {
+			case STATE_IDLE: {
+				/*DO NOTHING*/
+				break;
+			}
+			case STATE_PROCESS_GPS_SAMPLE: {
+				currentMainState = STATE_IDLE;
+
+				string currentADR_gpsSample;
+
+				unique_lock < mutex > lockMutexCurrentOutageStatus(mutexCurrentOutageStatus);
+				switch (currentOutageStatus) {
+					case OUTAGE: {
+						currentADR_gpsSample = "OUTAGE";
+						break;
+					}
+					case NO_OUTAGE: {
+						currentADR_gpsSample = "NO_OUTAGE";
+						break;
+					}
+				}
+				lockMutexCurrentOutageStatus.unlock();
+
+				currentADR_gpsSample += ",";
+
+				currentADR_gpsSample += ADR::getADR_GPS(queue_sensorReading_speedometer,
+						mutexQueue_sensorReading_speedometer, queue_sensorReading_gyro, mutexQueue_sensorReading_gyro,
+						queue_sensorReading_gps, mutexQueue_sensorReading_gps, currentOutageStatus,
+						mutexCurrentOutageStatus);
+
+				mosquitto_publish(mosq, NULL, TOPIC_ADR, currentADR_gpsSample.length(), currentADR_gpsSample.c_str(), 0,
+						false);
+
+				break;
+			}
+		}
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	}
+
+	mosquitto_loop_stop(mosq, true);
+
+	mosquitto_disconnect(mosq);
+	mosquitto_destroy(mosq);
+	mosquitto_lib_cleanup();
+
+	return 0;
+}

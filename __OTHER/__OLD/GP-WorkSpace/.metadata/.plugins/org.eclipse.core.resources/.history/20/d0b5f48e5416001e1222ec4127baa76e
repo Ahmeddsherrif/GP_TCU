@@ -1,0 +1,34 @@
+//============================================================================
+// Name        : Simulation.cpp
+// Author      : 
+// Version     :
+// Copyright   : Your copyright notice
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <iostream>
+#include <mosquitto.h>
+
+using namespace std;
+
+void on_connect(struct mosquitto *mosq, void *obj, int rc) {
+
+	if (rc) {
+		printf("Error with result code: %d\n", rc);
+		exit(-1);
+	}
+
+	mosquitto_subscribe(mosq, NULL, TOPIC_IMU, 0);
+	mosquitto_subscribe(mosq, NULL, TOPIC_SPEEDOMETER, 0);
+	mosquitto_subscribe(mosq, NULL, TOPIC_GPS, 0);
+
+}
+
+void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg) {
+
+}
+
+int main() {
+	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
+	return 0;
+}

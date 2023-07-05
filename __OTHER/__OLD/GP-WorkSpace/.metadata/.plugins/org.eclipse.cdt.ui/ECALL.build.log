@@ -1,0 +1,6 @@
+01:42:13 **** Incremental Build of configuration Debug for project ECALL ****
+make all 
+make: Nothing to be done for 'all'.
+
+01:42:13 Build Finished. 0 errors, 0 warnings. (took 212ms)
+

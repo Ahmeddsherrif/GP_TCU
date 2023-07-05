@@ -1,0 +1,177 @@
+#include "main.h"
+
+string outageStatus = MESSAGE_NO_OUTAGE;
+mutex mutexOutageStatus;
+
+bool isActive = false;
+bool isHalted = false;
+
+void on_connect(struct mosquitto *mosq, void *obj, int rc) {
+
+	if (rc) {
+		printf("Error with result code: %d\n", rc);
+		exit(-1);
+	}
+
+	mosquitto_subscribe(mosq, NULL, TOPIC_OUTAGE, 0);
+	mosquitto_subscribe(mosq, NULL, TOPIC_CONTROL, 0);
+	mosquitto_subscribe(mosq, NULL, TOPIC_CMD, 0);
+}
+
+void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg) {
+	string topic = string((char*) msg->topic);
+	string payload = string((char*) msg->payload);
+
+	if (topic == TOPIC_OUTAGE) {
+		if (payload == MESSAGE_OUTAGE || payload == MESSAGE_NO_OUTAGE) {
+			unique_lock<mutex> lockMutexOutageStatus(mutexOutageStatus);
+			outageStatus = payload;
+			lockMutexOutageStatus.unlock();
+		}
+	}
+	else if (topic == TOPIC_CONTROL) {
+		if (payload == MESSAGE_PAUSE) {
+			isHalted = true;
+			cout << "Halting ..." << endl;
+		}
+
+		else if (payload == MESSAGE_RESUME) {
+			isHalted = false;
+			cout << "Resuming ..." << endl;
+		}
+	}
+	else if (topic == TOPIC_CMD) {
+		if (payload == MESSAGE_START) {
+			isActive = true;
+			cout << "Starting ..." << endl;
+		}
+		else if (payload == MESSAGE_KILL) {
+			isActive = false;
+			cout << "Ending ..." << endl;
+		}
+	}
+}
+
+int main() {
+	int rc;
+	struct mosquitto *mosq;
+
+	mosquitto_lib_init();
+
+	mosq = mosquitto_new(NULL, true, NULL);
+	mosquitto_connect_callback_set(mosq, on_connect);
+	mosquitto_message_callback_set(mosq, on_message);
+
+	rc = mosquitto_connect(mosq, "localhost", 1883, 60);
+
+	if (rc != 0) {
+		printf("Client could not connect to broker! Error Code: %d\n", rc);
+		mosquitto_destroy(mosq);
+		return -1;
+	}
+
+	printf("We are now connected to the broker!\n");
+
+	string gyroFileName = string(DATA_DIR) + string(DATA_IMU_FILE);
+	GyroscopeSensor gyro(gyroFileName);
+	int gyroSampleNumber = 0;
+	const int maxGyroSampleNumber = gyro.getNumberOfSamples() - 1;
+	string currentGyroSample;
+
+	string speedometerFileName = string(DATA_DIR) + string(DATA_SPEEDOMETER_FILE);
+	SpeedometerSensor speedometer(speedometerFileName);
+	int speedometerSampleNumber = 0;
+	const int maxSpeedometerSampleNumber = speedometer.getNumberOfSamples() - 1;
+	string currentSpeedSample;
+
+	string gpsFileName = string(DATA_DIR) + string(DATA_GPS_FILE);
+	GPSSensor gps(gpsFileName);
+	int gpsSampleNumber = 0;
+	const int maxGpsSampleNumber = gps.getNumberOfSamples() - 1;
+	string currentGpsSample;
+
+	std::chrono::milliseconds imuPeriod(PERIOD_IMU);
+	std::chrono::milliseconds speedometerPeriod(PERIOD_SPEEDOMETER);
+	std::chrono::milliseconds gpsPeriod(PERIOD_GPS);
+
+	mosquitto_loop_start(mosq);
+
+	cout << "Waiting ..." << endl;
+
+	while (isActive == false) {
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
+
+	std::chrono::steady_clock::time_point lastTimeImu = std::chrono::steady_clock::now();
+	std::chrono::steady_clock::time_point lastTimeSpeedometer = std::chrono::steady_clock::now();
+	std::chrono::steady_clock::time_point lastTimeGps = std::chrono::steady_clock::now();
+
+	while (isActive == true) {
+
+		while (isHalted == true) {
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+		}
+
+		std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
+
+		// Code block to execute every 10ms
+		if (currentTime - lastTimeImu >= imuPeriod) {
+			lastTimeImu = currentTime;
+			// Insert your code here
+			currentGyroSample = gyro.getYawRate(gyroSampleNumber);
+			gyroSampleNumber++;
+
+			if (gyroSampleNumber >= maxGyroSampleNumber) {
+				break;
+			}
+
+			mosquitto_publish(mosq, NULL, TOPIC_IMU, currentGyroSample.length(), currentGyroSample.c_str(), 0, false);
+
+		}
+
+		// Code block to execute every 40ms
+		if (currentTime - lastTimeSpeedometer >= speedometerPeriod) {
+			lastTimeSpeedometer = currentTime;
+			// Insert your code here
+			currentSpeedSample = speedometer.getSpeed(speedometerSampleNumber);
+			speedometerSampleNumber++;
+
+			if (speedometerSampleNumber >= maxSpeedometerSampleNumber) {
+				break;
+			}
+
+			mosquitto_publish(mosq, NULL, TOPIC_SPEEDOMETER, currentSpeedSample.length(), currentSpeedSample.c_str(), 0,
+					false);
+
+		}
+
+		// Code block to execute every 1000ms
+		if (currentTime - lastTimeGps >= gpsPeriod) {
+			lastTimeGps = currentTime;
+			// Insert your code here
+			currentGpsSample = gps.getGPS(gpsSampleNumber);
+			gpsSampleNumber++;
+
+			if (gpsSampleNumber >= maxGpsSampleNumber) {
+				break;
+			}
+
+			unique_lock<mutex> lockMutexOutageStatus(mutexOutageStatus);
+			// Adds The outage status
+			currentGpsSample += "," + outageStatus;
+			lockMutexOutageStatus.unlock();
+
+			mosquitto_publish(mosq, NULL, TOPIC_GPS, currentGpsSample.length(), currentGpsSample.c_str(), 0, false);
+		}
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	}
+
+	mosquitto_loop_stop(mosq, true);
+
+	mosquitto_disconnect(mosq);
+	mosquitto_destroy(mosq);
+	mosquitto_lib_cleanup();
+
+	return 0;
+}

@@ -1,0 +1,122 @@
+#include "main.h"
+
+void on_connect(struct mosquitto *mosq, void *obj, int rc) {
+
+	if (rc) {
+		printf("Error with result code: %d\n", rc);
+		exit(-1);
+	}
+
+	//mosquitto_subscribe(mosq, NULL, TOPIC_IMU, 0);
+
+}
+
+void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg) {
+
+}
+
+int main() {
+	int rc;
+
+	mosquitto_lib_init();
+
+	struct mosquitto *mosq;
+
+	mosq = mosquitto_new(NULL, true, NULL);
+	mosquitto_connect_callback_set(mosq, on_connect);
+	mosquitto_message_callback_set(mosq, on_message);
+
+	rc = mosquitto_connect(mosq, BROKER_ADDRESS, BROKER_PORT, 10);
+	if (rc) {
+		printf("Could not connect to Broker with return code %d\n", rc);
+		return -1;
+	}
+
+	mosquitto_loop_start(mosq);
+	//mosquitto_publish(mosq, NULL, TOPIC_ADR, .length(), .c_str(), 0,false);
+
+	bool isActive = true;
+	string message;
+	char userInput;
+
+	while (isActive == true) {
+		cin >> userInput;
+
+		switch (userInput) {
+			case 'o':
+			case 'O': {
+				message = MESSAGE_OUTAGE;
+				mosquitto_publish(mosq, NULL, TOPIC_OUTAGE, message.length(), message.c_str(), 0,false);
+				break;
+			}
+
+			case 'n':
+			case 'N': {
+				message = MESSAGE_NO_OUTAGE;
+				mosquitto_publish(mosq, NULL, TOPIC_OUTAGE, message.length(), message.c_str(), 0,false);
+
+				break;
+			}
+
+
+			case 'e':
+			case 'E': {
+				message = MESSAGE_ECALL;
+				mosquitto_publish(mosq, NULL, TOPIC_ECALL, message.length(), message.c_str(), 0,false);
+
+				message = MESSAGE_PAUSE;
+				mosquitto_publish(mosq, NULL, TOPIC_CONTROL, message.length(), message.c_str(), 0,false);
+				break;
+			}
+
+			case 'p':
+			case 'P': {
+				message = MESSAGE_PAUSE;
+				mosquitto_publish(mosq, NULL, TOPIC_CONTROL, message.length(), message.c_str(), 0,false);
+				break;
+			}
+
+			case 's':
+			case 'S': {
+				message = MESSAGE_START;
+				mosquitto_publish(mosq, NULL, TOPIC_CMD, message.length(), message.c_str(), 0,false);
+				break;
+			}
+
+
+
+			case 'k':
+			case 'K': {
+				isActive = false;
+
+				message = MESSAGE_RESUME;
+				mosquitto_publish(mosq, NULL, TOPIC_CONTROL, message.length(), message.c_str(), 0,false);
+
+				message = MESSAGE_KILL;
+				mosquitto_publish(mosq, NULL, TOPIC_CMD, message.length(), message.c_str(), 0,false);
+				break;
+			}
+
+			case 'r':
+			case 'R': {
+				message = MESSAGE_RESUME;
+				mosquitto_publish(mosq, NULL, TOPIC_CONTROL, message.length(), message.c_str(), 0,false);
+				break;
+			}
+
+
+			default: {
+
+				break;
+			}
+		}
+	}
+
+	mosquitto_loop_stop(mosq, true);
+
+	mosquitto_disconnect(mosq);
+	mosquitto_destroy(mosq);
+	mosquitto_lib_cleanup();
+
+	return 0;
+}

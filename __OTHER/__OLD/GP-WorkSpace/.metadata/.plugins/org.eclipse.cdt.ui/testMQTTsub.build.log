@@ -1,0 +1,20 @@
+00:31:43 **** Build of configuration Debug for project testMQTTsub ****
+make all 
+Building file: ../src/ADR.cpp
+Invoking: GCC C++ Compiler
+g++ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"src/ADR.d" -MT"src/ADR.o" -o "src/ADR.o" "../src/ADR.cpp"
+Finished building: ../src/ADR.cpp
+ 
+Building file: ../src/main.cpp
+Invoking: GCC C++ Compiler
+g++ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"src/main.d" -MT"src/main.o" -o "src/main.o" "../src/main.cpp"
+Finished building: ../src/main.cpp
+ 
+Building target: testMQTTsub
+Invoking: GCC C++ Linker
+g++  -o "testMQTTsub" ./src/ADR.o ./src/main.o    -lmosquitto
+Finished building target: testMQTTsub
+ 
+
+00:31:44 Build Finished. 0 errors, 0 warnings. (took 1s.127ms)
+

@@ -1,0 +1,56 @@
+/*
+ * main.h
+ *
+ *  Created on: Jun 28, 2023
+ *      Author: ahmed
+ */
+
+#ifndef MAIN_H_
+#define MAIN_H_
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <cmath>
+#include <queue>
+#include <string.h>
+#include <cstdlib>
+#include <sstream>
+#include <mutex>
+
+#include <mosquitto.h>
+
+using namespace std;
+
+#define TOPIC_IMU					"sensors/imu"
+#define TOPIC_SPEEDOMETER			"sensors/speedometer"
+#define TOPIC_GPS					"sensors/gps"
+#define TOPIC_ADR					"sensors/adr"
+
+
+#define KMH_TO_MS(speed) 								(speed*1000.0/3600.0)
+#define MILLISECONDS_TO_SECONDS(inputMilliseconds)		(inputMilliseconds / 1000)
+
+constexpr double pi = 3.14159265358979323846;
+constexpr double earthRadius = 6371000.0; // Earth's radius in meters
+
+
+
+struct GPSLocation {
+	double latitude; // in degrees
+	double longitude; // in degree
+};
+
+
+
+enum outageStatus {
+	OUTAGE, NO_OUTAGE
+};
+
+
+enum mainEvent{
+	EVENT_IDLE,
+	EVENT_NEW_GPS_SAMPLE
+};
+
+
+#endif /* MAIN_H_ */

@@ -1,0 +1,6 @@
+01:42:12 **** Incremental Build of configuration Debug for project ADR ****
+make all 
+make: Nothing to be done for 'all'.
+
+01:42:13 Build Finished. 0 errors, 0 warnings. (took 262ms)
+

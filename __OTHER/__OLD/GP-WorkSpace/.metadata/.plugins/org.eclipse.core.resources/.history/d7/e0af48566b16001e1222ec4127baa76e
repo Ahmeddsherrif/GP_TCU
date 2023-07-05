@@ -1,0 +1,57 @@
+/*
+ * main.h
+ *
+ *  Created on: Jun 28, 2023
+ *      Author: ahmed
+ */
+
+#ifndef MAIN_H_
+#define MAIN_H_
+
+
+#include <stdio.h>
+#include <mosquitto.h>
+
+#include <iostream>
+#include <chrono>
+#include <thread>
+#include <string>
+#include <vector>
+#include <string.h>
+#include <mutex>
+
+using namespace std;
+
+#include "SensorFile.h"
+#include "GPSSensor.h"
+#include "GyroscopeSensor.h"
+#include "SpeedometerSensor.h"
+
+#define DATA_DIR 					"/home/ahmed/Desktop/GP_TCU/Demo/Simulation-Control/Sensors-Data-Process/Actual Data/Full-Track/"
+
+#define DATA_IMU_FILE				"Orientationx.csv"
+#define DATA_SPEEDOMETER_FILE		"Speedx.csv"
+#define DATA_GPS_FILE				"Positionx.csv"
+
+#define PERIOD_IMU					10
+#define PERIOD_SPEEDOMETER			40
+#define PERIOD_GPS					1000
+
+#define TOPIC_IMU					"sensors/imu"
+#define TOPIC_SPEEDOMETER			"sensors/speedometer"
+#define TOPIC_GPS					"sensors/gps"
+
+#define TOPIC_OUTAGE				"simulation/outage"
+#define TOPIC_CONTROL				"simulation/control"
+
+
+#define MESSAGE_OUTAGE				"outage"
+#define MESSAGE_NO_OUTAGE			"no_outage"
+
+
+#define MESSAGE_PAUSE				"pause"
+#define MESSAGE_RESUME				"resume"
+#define MESSAGE_START				"start"
+#define MESSAGE_KILL				"kill"
+
+#endif /* MAIN_H_ */

@@ -1,0 +1,34 @@
+/*
+ * main.h
+ *
+ *  Created on: Jun 29, 2023
+ *      Author: ahmed
+ */
+
+#ifndef MAIN_H_
+#define MAIN_H_
+
+
+#include <iostream>
+#include <stdlib.h>
+#include <string>
+#include <mosquitto.h>
+
+using namespace std;
+
+#define BROKER_ADDRESS				"localhost"
+#define BROKER_PORT					1883
+
+
+
+#define TOPIC_CMD				    "simulation/cmd"
+#define MESSAGE_START				"start"
+#define MESSAGE_KILL				"kill"
+
+
+#define TOPIC_GPS					"sensors/gps"
+#define TOPIC_ADR					"sensors/adr"
+
+
+
+#endif /* MAIN_H_ */

@@ -1,0 +1,34 @@
+/*
+ * main.h
+ *
+ *  Created on: Jun 29, 2023
+ *      Author: ahmed
+ */
+
+#ifndef MAIN_H_
+#define MAIN_H_
+
+
+#include <iostream>
+#include <stdlib.h>
+#include <string>
+#include <mosquitto.h>
+
+using namespace std;
+
+#define TOPIC_OUTAGE				"simulation/outage"
+#define TOPIC_ECALL					"simulation/ecall"
+#define TOPIC_CONTROL				"simulation/control"
+#define TOPIC_CMD				    "simulation/cmd"
+
+
+#define MESSAGE_OUTAGE				"outage"
+#define MESSAGE_NO_OUTAGE			"no_outage"
+#define MESSAGE_ECALL				"ecall"
+
+#define MESSAGE_PAUSE				"pause"
+#define MESSAGE_RESUME				"resume"
+#define MESSAGE_START				"start"
+#define MESSAGE_KILL				"kill"
+
+#endif /* MAIN_H_ */

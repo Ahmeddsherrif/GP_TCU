@@ -1,3 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">&#x0A;<refactoring comment="Rename resource &apos;testMQTTpub/src/testMQTTsub.cpp&apos; to &apos;testMQTTpub.cpp&apos;" description="Rename resource &apos;testMQTTsub.cpp&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/testMQTTsub.cpp" name="testMQTTpub.cpp" stamp="1687955762206" updateReferences="true"/>&#x0A;<refactoring comment="Rename resource &apos;testMQTTpub/src/testMQTTpub.cpp&apos; to &apos;main.cpp&apos;" description="Rename resource &apos;testMQTTpub.cpp&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/testMQTTpub.cpp" name="main.cpp" stamp="1687970881115" updateReferences="true"/>
-</session>

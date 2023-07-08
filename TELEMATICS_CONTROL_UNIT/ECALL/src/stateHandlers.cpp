@@ -87,6 +87,9 @@ void state_sys_dead_handler() {
 	if (stateSysEntry == true) {
 		stateSysEntry = false;
 
+		string message = MESSAGE_STATUS_DEAD;
+		mosquitto_publish(mosq, NULL, TOPIC_STATUS_PROCESS, message.length(), message.c_str(), 0, false);
+
 		TRACE_PRINT("Entering Dead State.");
 		TRACE_PRINT("Waiting ...");
 	}
@@ -101,6 +104,12 @@ void state_sys_dead_handler() {
 		case EVENT_SYS_START: {
 			currentSystemState = STATE_SYS_IDLE;
 			stateSysExit = true;
+			break;
+		}
+
+		case EVENT_STATUS:{
+			string message = MESSAGE_STATUS_DEAD;
+			mosquitto_publish(mosq, NULL, TOPIC_STATUS_PROCESS, message.length(), message.c_str(), 0, false);
 			break;
 		}
 
@@ -134,6 +143,10 @@ void state_sys_dead_handler() {
 void state_sys_idle_handler() {
 	if (stateSysEntry == true) {
 		stateSysEntry = false;
+
+		string message = MESSAGE_STATUS_IDLE;
+		mosquitto_publish(mosq, NULL, TOPIC_STATUS_PROCESS, message.length(), message.c_str(), 0, false);
+
 		TRACE_PRINT("Entering Idle State.");
 	}
 
@@ -216,6 +229,12 @@ void state_sys_idle_handler() {
 
 			break;
 		}
+
+		case EVENT_STATUS:{
+			string message = MESSAGE_STATUS_IDLE;
+			mosquitto_publish(mosq, NULL, TOPIC_STATUS_PROCESS, message.length(), message.c_str(), 0, false);
+			break;
+		}
 		case EVENT_SYS_START:
 		case EVENT_SYS_IDLE:
 		case EVENT_SYS_END:
@@ -239,8 +258,11 @@ void state_sys_idle_handler() {
 void state_sys_sos_handler() {
 	if (stateSysEntry == true) {
 		stateSysEntry = false;
-		TRACE_PRINT("Entering SOS State.");
 
+		string message = MESSAGE_STATUS_SOS;
+		mosquitto_publish(mosq, NULL, TOPIC_STATUS_PROCESS, message.length(), message.c_str(), 0, false);
+
+		TRACE_PRINT("Entering SOS State.");
 	}
 
 	// Process State
@@ -268,6 +290,13 @@ void state_sys_sos_handler() {
 			stateSysExit = true;
 			break;
 		}
+
+		case EVENT_STATUS:{
+			string message = MESSAGE_STATUS_SOS;
+			mosquitto_publish(mosq, NULL, TOPIC_STATUS_PROCESS, message.length(), message.c_str(), 0, false);
+			break;
+		}
+
 		case EVENT_SYS_START:
 		case EVENT_SYS_IDLE:
 		case EVENT_SYS_ECALL:
@@ -295,6 +324,9 @@ void state_sys_sos_handler() {
 void state_sys_call_handler() {
 	if (stateSysEntry == true) {
 		stateSysEntry = false;
+		string message = MESSAGE_STATUS_CALL;
+		mosquitto_publish(mosq, NULL, TOPIC_STATUS_PROCESS, message.length(), message.c_str(), 0, false);
+
 		TRACE_PRINT("Entering CALL State.");
 	}
 
@@ -318,6 +350,12 @@ void state_sys_call_handler() {
 		case EVENT_SYS_CALL_OUT: {
 			currentSystemState = STATE_SYS_SOS;
 			stateSysExit = true;
+			break;
+		}
+
+		case EVENT_STATUS:{
+			string message = MESSAGE_STATUS_CALL;
+			mosquitto_publish(mosq, NULL, TOPIC_STATUS_PROCESS, message.length(), message.c_str(), 0, false);
 			break;
 		}
 		case EVENT_SYS_START:

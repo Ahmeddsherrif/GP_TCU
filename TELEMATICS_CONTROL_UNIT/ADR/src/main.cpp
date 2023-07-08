@@ -56,7 +56,11 @@ void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_messag
 		else if (payload == MESSAGE_TERMINATE) {
 			tempSystemEventMessage.event = EVENT_SYS_TERMINATE;
 		}
+		else if (payload == MESSAGE_STATUS){
+			tempSystemEventMessage.event = EVENT_STATUS;
+		}
 	}
+
 
 	unique_lock<mutex> lockMutexQueueCurrentSystemEventMessage(mutexQueueCurrentSystemEventMessage);
 	queueCurrentSystemEventMessage.push(tempSystemEventMessage);
@@ -82,6 +86,8 @@ int main() {
 
 		//break condition
 		if (currentSystemEventMessage.event == EVENT_SYS_TERMINATE) {
+			string message = MESSAGE_STATUS_TERMINATE;
+			mosquitto_publish(mosq, NULL, TOPIC_STATUS_PROCESS, message.length(), message.c_str(), 0, false);
 			break;
 		}
 

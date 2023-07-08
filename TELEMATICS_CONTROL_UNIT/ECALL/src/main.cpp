@@ -33,21 +33,20 @@ void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_messag
 
 	SystemEventMessage tempSystemEventMessage(payload);
 	if (topic == TOPIC_SOS) {
-		if(payload == MESSAGE_ECALL) {
+		if (payload == MESSAGE_ECALL) {
 			tempSystemEventMessage.event = EVENT_SYS_ECALL;
 		}
-		else if(payload == MESSAGE_BCALL) {
+		else if (payload == MESSAGE_BCALL) {
 			tempSystemEventMessage.event = EVENT_SYS_BCALL;
 		}
-		else if(payload == MESSAGE_SIGN) {
+		else if (payload == MESSAGE_SIGN) {
 			tempSystemEventMessage.event = EVENT_SYS_SIGN;
 		}
-		else if(payload == MESSAGE_GUN)
-		{
+		else if (payload == MESSAGE_GUN) {
 			tempSystemEventMessage.event = EVENT_SYS_GUN;
 		}
 	}
-	else if (topic == TOPIC_ADR){
+	else if (topic == TOPIC_ADR) {
 		tempSystemEventMessage.event = EVENT_SYS_ADR_RECIEVED;
 	}
 	else if (topic == TOPIC_CMD) {
@@ -59,6 +58,9 @@ void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_messag
 		}
 		else if (payload == MESSAGE_TERMINATE) {
 			tempSystemEventMessage.event = EVENT_SYS_TERMINATE;
+		}
+		else if (payload == MESSAGE_STATUS) {
+			tempSystemEventMessage.event = EVENT_STATUS;
 		}
 	}
 	unique_lock<mutex> lockMutexQueueCurrentSystemEventMessage(mutexQueueCurrentSystemEventMessage);
@@ -76,6 +78,8 @@ int main() {
 
 		//break condition
 		if (currentSystemEventMessage.event == EVENT_SYS_TERMINATE) {
+			string message = MESSAGE_STATUS_TERMINATE;
+			mosquitto_publish(mosq, NULL, TOPIC_STATUS_PROCESS, message.length(), message.c_str(), 0, false);
 			break;
 		}
 

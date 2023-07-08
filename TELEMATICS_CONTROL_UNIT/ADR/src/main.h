@@ -40,7 +40,13 @@ using namespace std;
 #define MESSAGE_START				"start"
 #define MESSAGE_KILL				"kill"
 #define MESSAGE_TERMINATE			"terminate"
-#define MESSAGE_SEND_STATUS			"status"
+#define MESSAGE_STATUS				"status"
+
+#define TOPIC_STATUS_PROCESS		"status/adr"
+
+#define MESSAGE_STATUS_ACTIVE		"active"
+#define MESSAGE_STATUS_DEAD			"dead"
+#define MESSAGE_STATUS_TERMINATE	"terminate"
 
 #define STATUS_OUTAGE				"outage"
 #define STATUS_NO_OUTAGE			"no_outage"
@@ -60,6 +66,7 @@ enum SystemEvent {
 	EVENT_SYS_GPS_SAMPLE_RECIVED,
 	EVENT_SYS_IMU_SAMPLE_RECIVED,
 	EVENT_SYS_SPEEDOMETER_SAMPLE_RECIVED,
+	EVENT_STATUS,
 	EVENT_SYS_TERMINATE
 };
 
@@ -105,6 +112,7 @@ void on_connect(struct mosquitto *mosq, void *obj, int rc);
 // Shared Resources
 extern queue<SystemEventMessage> queueCurrentSystemEventMessage;
 extern mutex mutexQueueCurrentSystemEventMessage;
+
 
 // State Machine Variables
 extern bool stateSysEntry;

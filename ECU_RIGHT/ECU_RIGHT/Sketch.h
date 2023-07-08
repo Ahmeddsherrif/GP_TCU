@@ -18,10 +18,16 @@
 #include <SPI.h>
 #include <mcp2515.h>
 
-#define PIN_SS									53
-#define PIN_BUZZER								2
-#define PIN_LED_RED								3
-#define PIN_LED_GREEN							4
+#define PIN_SS									49
+#define PIN_BUZZER								45
+
+#define PIN_LED_GREEN							41
+#define PIN_LED_YELLOW							42
+#define PIN_LED_RED								44
+
+
+#define PIN_BUTTON								48
+
 
 #define CAN_MSG_DLC								1
 
@@ -53,9 +59,10 @@ typedef enum{
 	EVENT_KILL_SIMULATION,
 	EVENT_SLEEP,
 	EVENT_DISTRACTED,
-	EVENT_END_ALERT
+	EVENT_END_ALERT,
+	EVENT_BUTTON_PRESSED,
+	EVENT_BUTTON_NOT_PRESSED
 }Event_t;
-
 
 
 void can_message_recievied();
@@ -76,6 +83,7 @@ extern State_t mainState;
 extern Event_t mainEvent;
 extern bool stateEntry, stateExit;
 extern volatile unsigned long int stateEntryIntialTime;
+extern bool isDmsActive;
 
 
 #define BUZZER_ON_TIME_MS			3000

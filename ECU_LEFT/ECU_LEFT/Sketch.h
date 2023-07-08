@@ -25,7 +25,7 @@
 
 #include <stdlib.h>
 
-#define SS_PIN							53
+#define SS_PIN							49
 
 #define LCD_ROWS						2
 #define	LCD_COLUMNS						16

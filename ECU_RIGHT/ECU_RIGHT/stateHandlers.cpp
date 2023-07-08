@@ -70,9 +70,23 @@ void stateIDLE_handler(){
 		case EVENT_DISTRACTED:{
 			mainEvent = EVENT_IDLE;
 			
-			mainState = STATE_ACTIVE;
-			stateExit = true;
+			if(isDmsActive == true){
+				mainState = STATE_ACTIVE;
+				stateExit = true;
+			}
 	
+			break;
+		}
+		
+		case EVENT_BUTTON_PRESSED:{
+			isDmsActive = true;
+			digitalWrite(PIN_LED_YELLOW, HIGH);
+			break;
+		}
+		
+		case EVENT_BUTTON_NOT_PRESSED:{
+			isDmsActive = false;
+			digitalWrite(PIN_LED_YELLOW, LOW);
 			break;
 		}
 		
@@ -132,6 +146,21 @@ void stateACTIVE_handler(){
 			mainState = STATE_HALT;
 			stateExit = true;
 			
+			break;
+		}
+		
+		case EVENT_BUTTON_PRESSED:{
+			isDmsActive = true;
+			digitalWrite(PIN_LED_YELLOW, HIGH);
+			
+			mainEvent = EVENT_END_ALERT;					// needs to be inside an event queue
+			
+			break;
+		}
+		
+		case EVENT_BUTTON_NOT_PRESSED:{
+			isDmsActive = false;
+			digitalWrite(PIN_LED_YELLOW, LOW);
 			break;
 		}
 

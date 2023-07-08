@@ -23,11 +23,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
   9 .debug_frame  0000123c  00000000  00000000  00019e7c  2**2
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_str    0000425e  00000000  00000000  0001b0b8  2**0
+ 10 .debug_str    0000427f  00000000  00000000  0001b0b8  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_loc    00007627  00000000  00000000  0001f316  2**0
+ 11 .debug_loc    00007627  00000000  00000000  0001f337  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 00000618  00000000  00000000  0002693d  2**0
+ 12 .debug_ranges 00000618  00000000  00000000  0002695e  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -802,7 +802,7 @@ MCP2515 mcp2515(SS_PIN);
      4ca:	36 e9       	ldi	r19, 0x96	; 150
      4cc:	48 e9       	ldi	r20, 0x98	; 152
      4ce:	50 e0       	ldi	r21, 0x00	; 0
-     4d0:	65 e3       	ldi	r22, 0x35	; 53
+     4d0:	61 e3       	ldi	r22, 0x31	; 49
      4d2:	89 e0       	ldi	r24, 0x09	; 9
      4d4:	93 e0       	ldi	r25, 0x03	; 3
      4d6:	4d d6       	rcall	.+3226   	; 0x1172 <_ZN7MCP2515C1EhmP8SPIClass>

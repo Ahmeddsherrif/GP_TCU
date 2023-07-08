@@ -43,9 +43,27 @@ using namespace std;
 #define MESSAGE_KILL				"kill"
 #define MESSAGE_TERMINATE			"terminate"
 
+
+
+#define MESSAGE_STATUS						"status"
+#define TOPIC_STATUS_PROCESS_SENSORS		"status/sensors"
+#define TOPIC_STATUS_PROCESS_ECALL			"status/ecall"
+#define TOPIC_STATUS_PROCESS_ADR			"status/adr"
+#define TOPIC_STATUS_PROCESS_CAN			"status/can"
+#define TOPIC_STATUS_PROCESS_BLACK_BOX		"status/black_box"
+#define TOPIC_STATUS_PROCESS_VIDEO			"status/video"
+#define TOPIC_STATUS_PROCESS_SIGN			"status/sign"
+
+#define MESSAGE_STATUS_ACTIVE		"active"
+#define MESSAGE_STATUS_DEAD			"dead"
+#define MESSAGE_STATUS_HALT			"halt"
+#define MESSAGE_STATUS_TERMINATE	"terminate"
+
+
 #define TOPIC_DMS                   "dms"
 #define MESSAGE_SLEEP               "sleep"
 #define MESSAGE_DISTRACTED          "distracted"
+
 
 
 

@@ -29,7 +29,7 @@ using namespace chrono;
 #include "GyroscopeSensor.h"
 #include "SpeedometerSensor.h"
 
-#define DATA_DIR 					"/home/ahmed/Desktop/GP_TCU/TEST_BENCH/Sensors/Data/"
+#define DATA_DIR 					"/home/ahmed/Desktop/TEST_BENCH/Sensors/Data/"
 
 #define BROKER_ADDRESS				"192.168.1.11"
 #define BROKER_PORT					1883
@@ -42,16 +42,20 @@ using namespace chrono;
 #define PERIOD_SPEEDOMETER			40
 #define PERIOD_GPS					1000
 
-#define TOPIC_STATUS_SENSORS		"simulation/status/sensors"
-#define MESSAGE_STATUS_ACTIVE		"active"
-#define MESSAGE_STATUS_DEAD			"dead"
-#define MESSAGE_STATUS_HALTED		"halted"
 
 #define TOPIC_CMD					"simulation/cmd"
 #define MESSAGE_START				"start"
 #define MESSAGE_KILL				"kill"
 #define MESSAGE_TERMINATE			"terminate"
-#define MESSAGE_SEND_STATUS			"status"
+#define MESSAGE_STATUS				"status"
+
+#define TOPIC_STATUS_PROCESS		"status/sensors"
+
+#define MESSAGE_STATUS_ACTIVE		"active"
+#define MESSAGE_STATUS_DEAD			"dead"
+#define MESSAGE_STATUS_HALT			"halt"
+#define MESSAGE_STATUS_TERMINATE	"terminate"
+
 
 #define TOPIC_CONTROL_SENSORS		"simulation/control/sensors"
 #define MESSAGE_PAUSE				"pause"
@@ -80,6 +84,7 @@ enum SystemEvent {
 	EVENT_SYS_RESUME,
 	EVENT_SYS_OUTAGE_STATUS_RECIVED,
 	EVENT_SYS_PAUSE,
+	EVENT_STATUS,
 	EVENT_SYS_TERMINATE
 };
 

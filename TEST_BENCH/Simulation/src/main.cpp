@@ -10,6 +10,15 @@ void on_connect(struct mosquitto *mosq, void *obj, int rc) {
 	// subscribe to sign to halt the sensors
 	mosquitto_subscribe(mosq, NULL, TOPIC_SOS, 0);
 
+	// Subscribe to all status
+	mosquitto_subscribe(mosq, NULL, TOPIC_STATUS_PROCESS_SENSORS	 , 0);
+	mosquitto_subscribe(mosq, NULL, TOPIC_STATUS_PROCESS_ECALL		 , 0);
+	mosquitto_subscribe(mosq, NULL, TOPIC_STATUS_PROCESS_ADR		 , 0);
+	mosquitto_subscribe(mosq, NULL, TOPIC_STATUS_PROCESS_CAN		 , 0);
+	mosquitto_subscribe(mosq, NULL, TOPIC_STATUS_PROCESS_BLACK_BOX	 , 0);
+	mosquitto_subscribe(mosq, NULL, TOPIC_STATUS_PROCESS_VIDEO		 , 0);
+	mosquitto_subscribe(mosq, NULL, TOPIC_STATUS_PROCESS_SIGN		 , 0);
+
 }
 
 void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg) {
@@ -23,6 +32,22 @@ void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_messag
 		}
 	}
 
+}
+
+void print_welcome(){
+	cout << "--------------------------------------------" << endl;
+	cout << "S -> Start Simulation" 			<< endl;
+	cout << "O -> Start a GPS Outage" 			<< endl;
+	cout << "N -> End a GPS Outage" 			<< endl;
+	cout << "E -> Generate ECALL" 				<< endl;
+	cout << "P -> Pause Sensor Readings" 		<< endl;
+	cout << "R -> Resume Sensor Readings" 		<< endl;
+	cout << "D -> Distracted Driver" 			<< endl;
+	cout << "Z -> Sleeping Driver (zZzZZ)" 		<< endl;
+	cout << "K -> reset Simulation" 			<< endl;
+	cout << "Q -> refresh States" 			<< endl;
+	cout << "T -> Terminate all" 				<< endl;
+	cout << "--------------------------------------------" << endl;
 }
 
 int main() {
@@ -44,19 +69,7 @@ int main() {
 
 	mosquitto_loop_start(mosq);
 
-	cout << "--------------------------------------------" << endl;
-	cout << "S -> Start Simulation" << endl;
-	cout << "O -> Start a GPS Outage" << endl;
-	cout << "N -> End a GPS Outage" << endl;
-	cout << "E -> Generate ECALL" << endl;
-	cout << "B -> Generate BCALL" << endl;
-	cout << "P -> Pause Sensor Readings" << endl;
-	cout << "R -> Resume Sensor Readings" << endl;
-	cout << "D -> Distracted Driver" << endl;
-	cout << "Z -> Sleeping Driver (zZzZZ)" << endl;
-	cout << "K -> reset Simulation" << endl;
-	cout << "T -> Terminate all" << endl;
-	cout << "--------------------------------------------" << endl;
+	print_welcome();
 
 	bool isActive = true;
 	string message;

@@ -55,7 +55,7 @@ main-build: PSAP
 PSAP: $(OBJS) $(USER_OBJS) makefile $(OPTIONAL_TOOL_DEPS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++  -o "PSAP" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++  -o "PSAP" $(OBJS) $(USER_OBJS) $(LIBS) -lpthread
 	@echo 'Finished building target: $@'
 	@echo ' '
 

@@ -63,6 +63,9 @@ void state_sys_dead_handler() {
 	if (stateSysEntry == true) {
 		stateSysEntry = false;
 
+		string message = MESSAGE_STATUS_DEAD;
+		mosquitto_publish(mosq, NULL, TOPIC_STATUS_PROCESS, message.length(), message.c_str(), 0, false);
+
 		TRACE_PRINT("Entering Dead State.");
 		TRACE_PRINT("Waiting ...");
 	}
@@ -77,6 +80,12 @@ void state_sys_dead_handler() {
 		case EVENT_SYS_START: {
 			currentSystemState = STATE_SYS_ACTIVE;
 			stateSysExit = true;
+			break;
+		}
+
+		case EVENT_STATUS:{
+			string message = MESSAGE_STATUS_DEAD;
+			mosquitto_publish(mosq, NULL, TOPIC_STATUS_PROCESS, message.length(), message.c_str(), 0, false);
 			break;
 		}
 
@@ -104,6 +113,10 @@ void state_sys_dead_handler() {
 void state_sys_active_handler() {
 	if (stateSysEntry == true) {
 		stateSysEntry = false;
+
+		string message = MESSAGE_STATUS_ACTIVE;
+		mosquitto_publish(mosq, NULL, TOPIC_STATUS_PROCESS, message.length(), message.c_str(), 0, false);
+
 		TRACE_PRINT("Entering Active State.");
 	}
 
@@ -125,6 +138,12 @@ void state_sys_active_handler() {
 
 		case EVENT_SYS_OUTAGE_STATUS_RECIVED: {
 			outageStatus = currentSystemEventMessage.data;
+			break;
+		}
+
+		case EVENT_STATUS:{
+			string message = MESSAGE_STATUS_ACTIVE;
+			mosquitto_publish(mosq, NULL, TOPIC_STATUS_PROCESS, message.length(), message.c_str(), 0, false);
 			break;
 		}
 
@@ -166,6 +185,12 @@ void state_sys_halted_handler() {
 		case EVENT_SYS_KILL: {
 			currentSystemState = STATE_SYS_DEAD;
 			stateSysExit = true;
+			break;
+		}
+
+		case EVENT_STATUS:{
+			string message = MESSAGE_STATUS_HALT;
+			mosquitto_publish(mosq, NULL, TOPIC_STATUS_PROCESS, message.length(), message.c_str(), 0, false);
 			break;
 		}
 

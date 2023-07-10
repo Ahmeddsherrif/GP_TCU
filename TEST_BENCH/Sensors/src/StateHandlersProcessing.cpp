@@ -50,7 +50,13 @@ void state_sys_active_handler_processing() {
 	if (currentTime - lastTimeGps >= milliseconds(PERIOD_GPS)) {
 		lastTimeGps = currentTime;
 		// Insert your code here
-		currentGpsSample = gps->getGPS(gpsSampleNumber);
+
+
+		// Adds The outage status
+		currentGpsSample = outageStatus +  ",";
+
+
+		currentGpsSample += gps->getGPS(gpsSampleNumber);
 		gpsSampleNumber++;
 
 		if (gpsSampleNumber >= maxGpsSampleNumber) {
@@ -59,8 +65,8 @@ void state_sys_active_handler_processing() {
 			lockMutexQueueCurrentSystemEventMessage.unlock();
 		}
 
-		// Adds The outage status
-		currentGpsSample += "," + outageStatus;
+
+
 
 		mosquitto_publish(mosq, NULL, TOPIC_GPS, currentGpsSample.length(), currentGpsSample.c_str(), 0, false);
 	}

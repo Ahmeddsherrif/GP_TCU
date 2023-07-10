@@ -1,5 +1,4 @@
 import paho.mqtt.client as mqtt
-import time
 import cv2
 import numpy as np
 from tflite_runtime.interpreter import Interpreter
@@ -8,31 +7,43 @@ from enum import Enum, auto
 from queue import Queue
 import threading
 
-BROKER_ADDRESS = "localhost"
-BROKER_PORT = 1883
+
+BROKER_ADDRESS                  = "localhost"
+BROKER_PORT                     = 1883
 
 
-TOPIC_CMD = "simulation/cmd"
-MESSAGE_START = "start"
-MESSAGE_KILL = "kill"
-MESSAGE_TERMINATE = "terminate"
-
-TOPIC_SIGN_VIDEO = "video/sign"
-
-TOPIC_VIDEO_CONTROL = "simulation/control/video"
-MESSAGE_STREAM_END = "stream_end"
-
-TOPIC_SOS = "sos"
-MESSAGE_SIGN = "sign"
-
-MODEL_PATH = 'tflite_model_udemy.tflite'
-TRIGGER_THRESHOLD = 0.6
-TRIGGER_CONSECUTIVE_FRAMES = 2
+PROCESS_NAME                    = "sign"
 
 
-FRAME_RATE = 30
-FRAME_RATE_PROCESSING = 3
-FRAME_RATE_DIVISOR = FRAME_RATE / FRAME_RATE_PROCESSING
+TOPIC_CMD                       = "cmd"
+TOPIC_CMD_PROCESS               = "cmd/" + PROCESS_NAME
+MESSAGE_START                   = "start"
+MESSAGE_KILL                    = "kill"
+MESSAGE_TERMINATE               = "terminate"
+MESSAGE_STATUS                  = "status"
+
+TOPIC_STATUS_PROCESS            = "status/" + PROCESS_NAME
+MESSAGE_STATUS_ACTIVE           = "active"
+MESSAGE_STATUS_DEAD             = "dead"
+MESSAGE_STATUS_TERMINATE        = "terminate"
+
+TOPIC_SIGN_VIDEO                = "video/sign"
+
+TOPIC_VIDEO_CONTROL             = "video/control"
+MESSAGE_STREAM_END              = "stream_end"
+
+TOPIC_SOS                       = "sos"
+MESSAGE_SIGN                    = "sign"
+MESSAGE_NO_SIGN                 = "no_sign"
+
+MODEL_PATH                      = "/home/pi/Desktop/CENTRAL_GATEWAY/SIGN_DETECTION/tflite_model_udemy.tflite"
+TRIGGER_THRESHOLD               = 0.6
+TRIGGER_CONSECUTIVE_FRAMES      = 2
+
+
+FRAME_RATE                      = 30
+FRAME_RATE_PROCESSING           = 3
+FRAME_RATE_DIVISOR              = FRAME_RATE / FRAME_RATE_PROCESSING
 
 
 class Event(Enum):
@@ -40,6 +51,7 @@ class Event(Enum):
     start = auto()
     kill = auto()
     frame_recieved = auto()
+    status = auto()
     terminate = auto()
 
 class State(Enum):
@@ -97,6 +109,8 @@ class StateMachine:
     def state_dead_handler(self):
         if self.stateEntry == True:
             self.stateEntry = False
+            
+            self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_DEAD)
             print("Entering Dead State")
             
         # Process State
@@ -106,6 +120,10 @@ class StateMachine:
         if self.currentEventMessage.event == Event.start:
             self.currentState = State.active
             self.stateExit = True
+            
+        elif self.currentEventMessage.event == Event.status:
+            self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_DEAD)
+
 
 
         if self.stateExit == True:
@@ -154,12 +172,15 @@ class StateMachine:
                 self.context.client.publish(TOPIC_SOS, MESSAGE_SIGN)
                 print("SIGN_DETECTED")     
             else:
+                self.context.client.publish(TOPIC_SOS, MESSAGE_NO_SIGN)
                 print("NaN")
 
 
     def state_active_handler(self):
         if self.stateEntry == True:
             self.stateEntry = False
+            
+            self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_ACTIVE)
             print("Entering active State")
 
         # Process State
@@ -173,6 +194,10 @@ class StateMachine:
         elif self.currentEventMessage.event == Event.frame_recieved:
             self.state_active_handler_event_frame_recived_processing()
             
+            
+        elif self.currentEventMessage.event == Event.status:
+            self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_ACTIVE)
+        
         if self.stateExit == True:
             self.stateExit = False
             self.stateEntry = True
@@ -186,6 +211,7 @@ class StateMachine:
 
             # Break Condition
             if self.currentEventMessage.event == Event.terminate:
+                self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_TERMINATE)
                 break;
 
             # Process States
@@ -200,6 +226,7 @@ class StateMachine:
 
 def on_connect(client, userdata, flags, rc):
     client.subscribe(TOPIC_CMD)
+    client.subscribe(TOPIC_CMD_PROCESS)
     client.subscribe(TOPIC_SIGN_VIDEO)
     client.subscribe(TOPIC_VIDEO_CONTROL)
 
@@ -210,7 +237,7 @@ def on_message(client, userdata, msg):
     tempEventMessage = EventMessage()
     tempEventMessage.data = payload
 
-    if topic == TOPIC_CMD:
+    if topic == TOPIC_CMD or topic == TOPIC_CMD_PROCESS:
         decodedPayload = payload.decode()
         
         if decodedPayload == MESSAGE_START:
@@ -221,12 +248,15 @@ def on_message(client, userdata, msg):
             
         elif decodedPayload == MESSAGE_TERMINATE:
             tempEventMessage.event = Event.terminate
+            
+        elif decodedPayload == MESSAGE_STATUS:
+            tempEventMessage.event = Event.status
 
     elif topic == TOPIC_VIDEO_CONTROL:
         decodedPayload = payload.decode()
         
         if decodedPayload == MESSAGE_STREAM_END:
-            tempEventMessage.event = Event.kill
+            pass #tempEventMessage.event = Event.kill
 
     elif topic == TOPIC_SIGN_VIDEO:
         tempEventMessage.event = Event.frame_recieved

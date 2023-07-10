@@ -25,6 +25,7 @@ void on_connect(struct mosquitto *mosq, void *obj, int rc) {
 	mosquitto_subscribe(mosq, NULL, TOPIC_ADR, 0);
 	mosquitto_subscribe(mosq, NULL, TOPIC_SOS, 0);
 	mosquitto_subscribe(mosq, NULL, TOPIC_CMD, 0);
+	mosquitto_subscribe(mosq, NULL, TOPIC_CMD_PROCESS, 0);
 }
 
 void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg) {
@@ -33,24 +34,23 @@ void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_messag
 
 	SystemEventMessage tempSystemEventMessage(payload);
 	if (topic == TOPIC_SOS) {
-		if(payload == MESSAGE_ECALL) {
+		if (payload == MESSAGE_ECALL) {
 			tempSystemEventMessage.event = EVENT_SYS_ECALL;
 		}
-		else if(payload == MESSAGE_BCALL) {
+		else if (payload == MESSAGE_BCALL) {
 			tempSystemEventMessage.event = EVENT_SYS_BCALL;
 		}
-		else if(payload == MESSAGE_SIGN) {
+		else if (payload == MESSAGE_SIGN) {
 			tempSystemEventMessage.event = EVENT_SYS_SIGN;
 		}
-		else if(payload == MESSAGE_GUN)
-		{
+		else if (payload == MESSAGE_GUN) {
 			tempSystemEventMessage.event = EVENT_SYS_GUN;
 		}
 	}
-	else if (topic == TOPIC_ADR){
+	else if (topic == TOPIC_ADR) {
 		tempSystemEventMessage.event = EVENT_SYS_ADR_RECIEVED;
 	}
-	else if (topic == TOPIC_CMD) {
+	else if (topic == TOPIC_CMD || topic == TOPIC_CMD_PROCESS) {
 		if (payload == MESSAGE_START) {
 			tempSystemEventMessage.event = EVENT_SYS_START;
 		}
@@ -59,6 +59,9 @@ void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_messag
 		}
 		else if (payload == MESSAGE_TERMINATE) {
 			tempSystemEventMessage.event = EVENT_SYS_TERMINATE;
+		}
+		else if (payload == MESSAGE_STATUS) {
+			tempSystemEventMessage.event = EVENT_STATUS;
 		}
 	}
 	unique_lock<mutex> lockMutexQueueCurrentSystemEventMessage(mutexQueueCurrentSystemEventMessage);
@@ -76,6 +79,8 @@ int main() {
 
 		//break condition
 		if (currentSystemEventMessage.event == EVENT_SYS_TERMINATE) {
+			string message = MESSAGE_STATUS_TERMINATE;
+			mosquitto_publish(mosq, NULL, TOPIC_STATUS_PROCESS, message.length(), message.c_str(), 0, false);
 			break;
 		}
 

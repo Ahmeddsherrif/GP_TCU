@@ -8,10 +8,10 @@
 #ifndef CONFIGURATION_H_
 #define CONFIGURATION_H_
 
-#define DEVICE_FILE 			"/dev/ttyACM0"
+#define DEVICE_FILE 			"/dev/ttyACM1"
 #define DEVICE_BAUDRATE 		B9600
 
-#define PSAP_LOG_FILE_PATH  	"/home/ahmed/Desktop/GP_TCU/TEST_BENCH/PSAP/Data/"
+#define PSAP_LOG_FILE_PATH  	"/home/ahmed/Desktop/TEST_BENCH/PSAP/Data/"
 
 #define SERIAL_BUFFER_MAX_SIZE 	1024
 

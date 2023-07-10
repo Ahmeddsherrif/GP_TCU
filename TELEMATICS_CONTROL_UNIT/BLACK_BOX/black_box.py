@@ -7,29 +7,42 @@ from enum import Enum, auto
 from queue import Queue
 import threading
 
-
-BROKER_ADDRESS = "localhost"
-BROKER_PORT = 1883
+import os
 
 
-TOPIC_CMD = "simulation/cmd"
-MESSAGE_START = "start"
-MESSAGE_KILL = "kill"
-MESSAGE_TERMINATE = "terminate"
 
-TOPIC_SIGN_VIDEO = "video/sign"
+BROKER_ADDRESS              = "192.168.1.11"
+BROKER_PORT                 = 1883
 
-TOPIC_VIDEO_CONTROL = "simulation/control/video"
-MESSAGE_STREAM_END = "stream_end"
+PROCESS_NAME                = "black_box"
 
-TOPIC_SOS = "sos"
-MESSAGE_SIGN = "sign"
+OUTPUT_VIDEO_DIR            = "/home/user/Desktop/TELEMATICS_CONTROL_UNIT/BLACK_BOX/Data/"
 
-WIDTH = 640
-HEIGHT = 480
-FRAME_RATE = 30
+TOPIC_CMD                   = "cmd"
+TOPIC_CMD_PROCESS           = "cmd/" + PROCESS_NAME
+MESSAGE_START               = "start"
+MESSAGE_KILL                = "kill"
+MESSAGE_TERMINATE           = "terminate"
+MESSAGE_STATUS              = "status"
 
-RECORD_TIME_SECONDS = 2
+TOPIC_STATUS_PROCESS        = "status/" + PROCESS_NAME
+MESSAGE_STATUS_ACTIVE       = "active"
+MESSAGE_STATUS_DEAD         = "dead"
+MESSAGE_STATUS_TERMINATE    = "terminate"
+
+TOPIC_SIGN_VIDEO            = "video/sign"
+
+TOPIC_VIDEO_CONTROL         = "video/control"
+MESSAGE_STREAM_END          = "stream_end"
+
+TOPIC_SOS                   = "sos"
+MESSAGE_SIGN                = "sign"
+
+WIDTH                       = 640
+HEIGHT                      = 480
+FRAME_RATE                  = 30
+
+RECORD_TIME_SECONDS         = 2
 
 
 class Event(Enum):
@@ -37,6 +50,7 @@ class Event(Enum):
     start = auto()
     kill = auto()
     sos = auto()
+    status = auto()
     frame_recieved = auto()
     terminate = auto()
 
@@ -89,6 +103,8 @@ class StateMachine:
     def state_dead_handler(self):
         if self.stateEntry == True:
             self.stateEntry = False
+            
+            self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_DEAD)
             print("Entering Dead State")
             
         # Process State
@@ -98,6 +114,9 @@ class StateMachine:
         if self.currentEventMessage.event == Event.start:
             self.currentState = State.active
             self.stateExit = True
+            
+        elif self.currentEventMessage.event == Event.status:
+            self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_DEAD)
 
 
         if self.stateExit == True:
@@ -116,6 +135,8 @@ class StateMachine:
     def state_active_handler(self):
         if self.stateEntry == True:
             self.stateEntry = False
+            
+            self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_ACTIVE)
             print("Entering active State")
 
         # Process State
@@ -136,6 +157,9 @@ class StateMachine:
             self.currentState = State.dead
             self.stateExit = True
             
+        elif self.currentEventMessage.event == Event.status:
+            self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_ACTIVE)
+           
             
         if self.stateExit == True:
             self.stateExit = False
@@ -145,7 +169,7 @@ class StateMachine:
     def state_active_handler_event_sos_processing(self):
         print("Saving Video ... ")
         current_time = time.strftime('%Y-%m-%d_%H-%M-%S')
-        output_video_name = "BB_" + current_time + ".mp4"
+        output_video_name = OUTPUT_VIDEO_DIR + "BB_" + current_time + ".mp4"
         output_codec = cv2.VideoWriter_fourcc(*'mp4v')
         output_writer = cv2.VideoWriter(output_video_name, output_codec, FRAME_RATE, (WIDTH, HEIGHT))
 
@@ -156,6 +180,11 @@ class StateMachine:
         # Release the output video writer
         output_writer.release()
         print("Done Saving!")
+        
+        send_video(output_video_name)
+        print("Done Sending!")
+        
+        
 
 
     def run(self):
@@ -165,6 +194,7 @@ class StateMachine:
 
             # Break Condition
             if self.currentEventMessage.event == Event.terminate:
+                self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_TERMINATE)
                 break;
 
             # Process States
@@ -176,9 +206,12 @@ class StateMachine:
 
         print("HASTA LAVISTA")
         
-
+def send_video(VIDEO_PATH):
+    os.system("scp " + VIDEO_PATH + " ahmed@192.168.1.110:~/Desktop/TEST_BENCH/BLACK_BOX_OUTPUT")
+    
 def on_connect(client, userdata, flags, rc):
     client.subscribe(TOPIC_CMD)
+    client.subscribe(TOPIC_CMD_PROCESS)
     client.subscribe(TOPIC_SIGN_VIDEO)
     client.subscribe(TOPIC_VIDEO_CONTROL)
     client.subscribe(TOPIC_SOS)
@@ -191,7 +224,7 @@ def on_message(client, userdata, msg):
     tempEventMessage = EventMessage()
     tempEventMessage.data = payload
 
-    if topic == TOPIC_CMD:
+    if topic == TOPIC_CMD or topic == TOPIC_CMD_PROCESS:
         decodedPayload = payload.decode()
         
         if decodedPayload == MESSAGE_START:
@@ -202,6 +235,9 @@ def on_message(client, userdata, msg):
             
         elif decodedPayload == MESSAGE_TERMINATE:
             tempEventMessage.event = Event.terminate
+            
+        elif decodedPayload == MESSAGE_STATUS:
+            tempEventMessage.event = Event.status
 
     elif topic == TOPIC_VIDEO_CONTROL:
         decodedPayload = payload.decode()

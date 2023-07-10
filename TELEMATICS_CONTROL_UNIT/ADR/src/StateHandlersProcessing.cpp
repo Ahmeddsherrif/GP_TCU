@@ -17,13 +17,13 @@ void state_sys_active_process_event_gps_sample_recieved() {
 	string item;
 
 	getline(ss, item, ',');
+	string currentOutageStatus = item;
+
+	getline(ss, item, ',');
 	currentGpsSample.latitude = stod(item);
 
 	getline(ss, item, ',');
 	currentGpsSample.longitude = stod(item);
-
-	getline(ss, item, ',');
-	string currentOutageStatus = item;
 
 	queue_sensorReading_gps.push(currentGpsSample);
 

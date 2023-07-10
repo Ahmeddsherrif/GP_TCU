@@ -61,7 +61,7 @@ MSDEncoder::MSDEncoder(const string &fileDir) {
 		string currentLine;
 
 		getline(inputConfigFile, currentLine);
-		this->emergencyPhoneNumber = currentLine;
+		this->emergencyPhoneNumber = currentLine.substr(0,11);
 
 	    inputConfigFile.close();
 	}

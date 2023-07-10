@@ -102,7 +102,6 @@ Error_t Mobile::sendSMS(const string& recipientPhoneNumber, const string& SMStex
 	rtnError = recieveResponse();
 
 	rtnError = sendCMD(CMD_SMS_START(recipientPhoneNumber));
-	//rtnError = recieveResponse(RESPONSE_BREAK_SMS);
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 	rtnError = sendCMD(SMStext + SMS_END);

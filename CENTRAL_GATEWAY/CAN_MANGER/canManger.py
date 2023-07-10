@@ -9,11 +9,19 @@ import threading
 BROKER_ADDRESS = "localhost"
 BROKER_PORT = 1883
 
+PROCESS_NAME = "can"
 
-TOPIC_CMD = "simulation/cmd"
+TOPIC_CMD = "cmd"
+TOPIC_CMD_PROCESS = "cmd/" + PROCESS_NAME
 MESSAGE_START = "start"
 MESSAGE_KILL = "kill"
 MESSAGE_TERMINATE = "terminate"
+
+TOPIC_STATUS_PROCESS = "status/" + PROCESS_NAME
+MESSAGE_STATUS = "status"
+MESSAGE_STATUS_ACTIVE = "active"
+MESSAGE_STATUS_DEAD = "dead"
+MESSAGE_STATUS_TERMINATE = "terminate"
 
 TOPIC_SOS = "sos"
 MESSAGE_ECALL = "ecall"
@@ -54,6 +62,7 @@ class Event(Enum):
     etherFrame_distracted_recived = auto()
     etherFrame_speedometer_recived = auto()
     canFrame_bcall_recived= auto()
+    status = auto()
     terminate = auto()
 
 
@@ -102,13 +111,13 @@ class StateMachine:
         message = self.context.bus.recv(timeout=0)
 
         if message is not None:
-            id = message.arbitration_id
+            can_id = message.arbitration_id
             data = message.data[0]
 
             self.currentEventMessage.canData = data
             self.currentEventMessage.ethernetData = ""
             
-            if id == CAN_MSG_SOS_ID:
+            if can_id == CAN_MSG_SOS_ID:
                 if data == CAN_MSG_SOS_DATA_REQUEST_BCALL:
                     self.currentEventMessage.event = Event.canFrame_bcall_recived
         else:
@@ -125,6 +134,8 @@ class StateMachine:
     def state_dead_handler(self):
         if self.stateEntry == True:
             self.stateEntry = False
+            
+            self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_DEAD)
             print("Entering Dead State")
 
         # Process State
@@ -139,6 +150,9 @@ class StateMachine:
             
             self.currentState = State.active
             self.stateExit = True
+            
+        elif self.currentEventMessage.event == Event.status:
+            self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_DEAD)
 
         if self.stateExit == True:
             self.stateExit = False
@@ -154,6 +168,8 @@ class StateMachine:
     def state_active_handler(self):
         if self.stateEntry == True:
             self.stateEntry = False
+            
+            self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_ACTIVE)
             print("Entering active State")
 
         # Process State
@@ -193,6 +209,9 @@ class StateMachine:
             self.context.client.publish(TOPIC_SOS, MESSAGE_BCALL)
             message = can.Message(arbitration_id=CAN_MSG_SOS_ID, data=[CAN_MSG_SOS_DATA_BCALL], is_extended_id=False)
             self.context.bus.send(message)
+            
+        elif self.currentEventMessage.event == Event.status:
+            self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_ACTIVE)
         
         if self.stateExit == True:
             self.stateExit = False
@@ -209,6 +228,10 @@ class StateMachine:
             if self.currentEventMessage.event == Event.terminate:
                 message = can.Message(arbitration_id=CAN_MSG_SIMULATION_CMD_ID, data=[CAN_MSG_SIMULATION_CMD_DATA_KILL], is_extended_id=False)
                 self.context.bus.send(message)
+                
+                
+                self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_TERMINATE)
+                
                 break
 
             # Process States
@@ -224,6 +247,7 @@ class StateMachine:
 # Callback function for when the client connects to the MQTT broker
 def on_connect(client, userdata, flags, rc):
     client.subscribe(TOPIC_CMD)
+    client.subscribe(TOPIC_CMD_PROCESS)
     client.subscribe(TOPIC_SOS)
     client.subscribe(TOPIC_DMS)
     client.subscribe(TOPIC_SPEEDOMETER)
@@ -239,7 +263,7 @@ def on_message(client, userdata, msg):
     tempEventMessage.ethernetData = payload
     tempEventMessage.canData = ""
 
-    if topic == TOPIC_CMD:
+    if topic == TOPIC_CMD or topic == TOPIC_CMD_PROCESS:
         decodedPayload = payload.decode()
         
         if decodedPayload == MESSAGE_START:
@@ -250,6 +274,9 @@ def on_message(client, userdata, msg):
         
         elif decodedPayload == MESSAGE_TERMINATE:
             tempEventMessage.event = Event.terminate
+            
+        elif decodedPayload == MESSAGE_STATUS:
+            tempEventMessage.event = Event.status
 
     elif topic == TOPIC_SPEEDOMETER:
         tempEventMessage.event = Event.etherFrame_speedometer_recived

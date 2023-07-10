@@ -1,3 +1,4 @@
+
 from enum import Enum, auto
 from queue import Queue
 import threading
@@ -5,21 +6,33 @@ import time
 import cv2
 import paho.mqtt.client as mqtt
 
-BROKER_ADDRESS = "192.168.1.11"
-BROKER_PORT = 1883
+BROKER_ADDRESS              = "192.168.1.11"
+BROKER_PORT                 = 1883
+
+PROCESS_NAME = "video"
 
 
-TOPIC_CMD = "simulation/cmd"
-MESSAGE_START = "start"
-MESSAGE_KILL = "kill"
-MESSAGE_TERMINATE = "terminate"
+TOPIC_CMD                   = "cmd"
+TOPIC_CMD_PROCESS           = "cmd/" + PROCESS_NAME
+MESSAGE_START               = "start"
+MESSAGE_KILL                = "kill"
+MESSAGE_TERMINATE           = "terminate"
+MESSAGE_STATUS              = "status"
+MESSAGE_PAUSE	            = "pause"
+MESSAGE_RESUME	            = "resume"
 
-TOPIC_SIGN_VIDEO = "video/sign"
+TOPIC_STATUS                = "status"
+TOPIC_STATUS_PROCESS        = "status/" + PROCESS_NAME
+MESSAGE_STATUS_ACTIVE       = "active"
+MESSAGE_STATUS_DEAD         = "dead"
+MESSAGE_STATUS_HALT         = "halt"
+MESSAGE_STATUS_TERMINATE    = "terminate"
 
-TOPIC_VIDEO_CONTROL = "simulation/control/video"
-MESSAGE_STREAM_END = "stream_end"
-MESSAGE_PAUSE	= "pause"
-MESSAGE_RESUME	= "resume"
+TOPIC_SIGN_VIDEO            = "video/sign"
+
+TOPIC_VIDEO_CONTROL         = "video/control"
+MESSAGE_STREAM_END          = "stream_end"
+
 
 WIDTH = 640
 HEIGHT = 480
@@ -36,6 +49,7 @@ class Event(Enum):
     kill = auto()
     terminate = auto()
     pause = auto()
+    status = auto()
     resume = auto()
 
 class State(Enum):
@@ -115,6 +129,7 @@ class StateMachine:
         if self.stateEntry == True:
             self.stateEntry = False
             
+            self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_DEAD)
             print("Entering Dead State")
             
         # Process State
@@ -124,6 +139,10 @@ class StateMachine:
         if self.currentEventMessage.event == Event.start:
             self.currentState = State.active
             self.stateExit = True
+            
+        elif self.currentEventMessage.event == Event.status:
+            self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_DEAD)
+            print("status send")
 
 
         if self.stateExit == True:
@@ -138,6 +157,8 @@ class StateMachine:
     def state_active_handler(self):
         if self.stateEntry == True:
             self.stateEntry = False
+            
+            self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_ACTIVE)
             print("Entering active State")
 
         # Process State
@@ -153,10 +174,13 @@ class StateMachine:
             self.currentState = State.dead
             self.stateExit = True
             
-        if self.currentEventMessage.event == Event.pause:
+        elif self.currentEventMessage.event == Event.pause:
             self.currentState = State.halt
             self.stateExit = True
-
+       
+        elif self.currentEventMessage.event == Event.status:
+            self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_ACTIVE)
+  
         if self.stateExit == True:
             self.stateExit = False
             self.stateEntry = True
@@ -165,6 +189,8 @@ class StateMachine:
     def state_halt_handler(self):
         if self.stateEntry == True:
             self.stateEntry = False
+            
+            self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_HALT)
             print("Entering halt State")
             # TODO: add text on opencv window
 
@@ -185,6 +211,9 @@ class StateMachine:
             self.currentState = State.active
             self.stateExit = True
 
+        elif self.currentEventMessage.event == Event.status:
+            self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_HALT)
+        
         if self.stateExit == True:
             self.stateExit = False
             self.stateEntry = True
@@ -201,6 +230,7 @@ class StateMachine:
 
             # Break Condition
             if self.currentEventMessage.event == Event.terminate:
+                self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_TERMINATE)
                 break;
 
             # Process States
@@ -219,7 +249,8 @@ class StateMachine:
 
 def on_connect(client, userdata, flags, rc):
     client.subscribe(TOPIC_CMD)
-    client.subscribe(TOPIC_VIDEO_CONTROL)
+    client.subscribe(TOPIC_CMD_PROCESS)
+
 
 def on_message(client, userdata, msg):
     topic = msg.topic
@@ -228,7 +259,7 @@ def on_message(client, userdata, msg):
     tempEventMessage = EventMessage()
     tempEventMessage.data = payload
 
-    if topic == TOPIC_CMD:
+    if topic == TOPIC_CMD or topic == TOPIC_CMD_PROCESS:
         decodedPayload = payload.decode()
         if decodedPayload == MESSAGE_START:
             tempEventMessage.event = Event.start
@@ -239,12 +270,15 @@ def on_message(client, userdata, msg):
         elif decodedPayload == MESSAGE_TERMINATE:
             tempEventMessage.event = Event.terminate
             
-    elif topic == TOPIC_VIDEO_CONTROL:
-        decodedPayload = payload.decode()
+        elif decodedPayload == MESSAGE_STATUS:
+            tempEventMessage.event = Event.status   
+            
         if decodedPayload == MESSAGE_PAUSE:
             tempEventMessage.event = Event.pause
+            
         elif decodedPayload == MESSAGE_RESUME:
-            tempEventMessage.event = Event.resume
+            tempEventMessage.event = Event.resume  
+            
 
     mutexEventQueue.acquire()
     sharedEventMessageQueue.put(tempEventMessage)

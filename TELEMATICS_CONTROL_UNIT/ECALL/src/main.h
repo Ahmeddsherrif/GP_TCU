@@ -42,10 +42,20 @@ using namespace std;
 #define MESSAGE_SIGN				"sign"
 #define MESSAGE_END					"end"
 
-#define TOPIC_CMD				    "simulation/cmd"
+#define TOPIC_CMD				    "cmd"
+#define TOPIC_CMD_PROCESS			"cmd/ecall"
 #define MESSAGE_START				"start"
 #define MESSAGE_KILL				"kill"
 #define MESSAGE_TERMINATE			"terminate"
+#define MESSAGE_STATUS				"status"
+
+#define TOPIC_STATUS_PROCESS		"status/ecall"
+
+#define MESSAGE_STATUS_IDLE			"idle"
+#define MESSAGE_STATUS_SOS			"sos"
+#define MESSAGE_STATUS_CALL			"call"
+#define MESSAGE_STATUS_DEAD			"dead"
+#define MESSAGE_STATUS_TERMINATE	"terminate"
 
 #define STATUS_OUTAGE				"outage"
 #define STATUS_NO_OUTAGE			"no_outage"
@@ -117,6 +127,7 @@ enum SystemEvent {
 	EVENT_SYS_CALL_IN,
 	EVENT_SYS_CALL_OUT,
 	EVENT_SYS_TERMINATE,
+	EVENT_STATUS,
 	EVENT_SYS_ADR_RECIEVED
 };
 

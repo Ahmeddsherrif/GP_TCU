@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<!-- <html lang="en"> -->
+<head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="css/master.css" />
+        <title>PSAP Web Page</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css"/>
+    
+</head>
+<body onload="initMap()">
+       
+        <div class="wrapper">
+                <div class="form">
+                        <header>Public Safety Answering Point</header>
+                        <form action="">
+                                <div class="field fname">
+                                        <div class="input_area">
+                                        <label for="msd">MSD ID:</label>
+                                        <input type="text" id="msd" readonly>
+                                        </div>
+                                </div>
+                                <div class="field fname">
+                                        <div class="input_area">
+                                        <label for="vechile">Vehicle number:</label>
+                                        <input type="text" id="vehcile" readonly>
+                                        </div>
+                                </div>
+                                <div class="field fname">
+                                        <div class="input_area">
+                                        <label for="activate">activation:</label>
+                                        <input type="text" id="activate" readonly>
+                                        </div>
+                                </div>
+                                <div class="field fname">
+                                        <div class="input_area">
+                                        <label for="call">Test Call:</label>
+                                        <input type="text" id="call" readonly>
+                                        </div>
+                                </div>
+                                <div class="field fname">
+                                        <div class="input_area">
+                                        <label for="position">Position Trusted:</label>                                        
+                                        <input type="text" id="position" readonly>
+                                        </div>
+                                </div>
+                                <div class="field fname">
+                                        <div class="input_area">
+                                        <label for="type">Vehcile Type:</label>
+                                        <input type="text" id="type" readonly>
+                                        </div>
+                                </div>
+                                <div class="field fname">
+                                        <div class="input_area">
+                                        <label for="tank">Propulsion type:</label>
+                                        <input type="text" id="tank" readonly>
+                                        </div>
+                                </div>
+                                <div class="field fname">
+                                        <div class="input_area">
+                                        <label for="time">Timestamp:</label>
+                                        <input type="text" id="time" readonly>
+                                        </div>
+                                </div>
+                                <div class="field fname">
+                                        <div class="input_area">
+                                        <label for="latitude">position latitude:</label>
+                                        <input type="text" id="latitude" readonly>
+                                        </div>
+                                </div>
+                                <div class="field fname">
+                                        <div class="input_area">
+                                        <label for="longitude">position longitude:</label>
+                                        <input type="text" id="longitude" readonly>
+                                        </div>
+                                </div>
+                                <div class="field fname">
+                                        <div class="input_area">
+                                        <label for="direction">Vehicle Direction:</label>
+                                        <input type="text" id="direction" readonly>
+                                        </div>
+                                </div>
+                                <div class="field fname">
+                                        <div class="input_area">
+                                        <label for="passengers">Number of Passengers:</label>
+                                        <input type="text" id="passengers" readonly>
+                                        </div>
+                                </div>
+                                <div>  <button type="button" onclick="loadData()" >Load Data</button> </div> 
+
+                                
+
+                               
+
+                        </form>
+
+                </div>
+        </div>
+
+       
+        <div class="continer">
+                <center>
+                        <div class="NS">  <h2>Map</h2> </div>   
+                </center>
+        <div id="map"></div>
+        <center>
+                <div> <input type="submit" id="submit" value="Show Location"> </div>
+        </center>
+        </div>
+
+
+
+
+
+
+        <div id="info"></div>
+        <script>
+		function initMap() {
+			var inputLat = document.getElementById("latitude");
+			var inputLng = document.getElementById("longitude");
+			var sanFrancisco = [37.7749, -122.4194];
+			var map = L.map('map').setView(sanFrancisco, 12);
+			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+					attribution: 'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+					maxZoom: 18,
+					tileSize: 512,
+					zoomOffset: -1,
+					accessToken: 'your.mapbox.access.token'
+			}).addTo(map);
+			var marker = L.marker(sanFrancisco).addTo(map);
+			document.getElementById("submit").addEventListener("click", function(e) {
+				e.preventDefault();
+				var lat = parseFloat(inputLat.value);
+				var lng = parseFloat(inputLng.value);
+				if (isNaN(lat) || isNaN(lng)) {
+					alert("Please enter valid coordinates.");
+					return;
+				}
+				var location = [lat, lng];
+				map.setView(location, 12);
+				marker.setLatLng(location);
+			});
+		}
+	</script>
+        <div id="info"></div>
+        <script>
+                function loadData() {
+                      // Prompt user to select file
+                      const fileInput = document.createElement("input");
+                      fileInput.type = "file";
+                      fileInput.accept = ".txt";
+                      fileInput.style.display = "none";
+                      fileInput.onchange = function(event) {
+                      const file = event.target.files[0];
+                      const reader = new FileReader();
+                      reader.onload = function(event) {
+                      const contents = event.target.result;
+                      displayData(contents);
+                              };
+                              reader.readAsText(file);
+                      };
+                      fileInput.click();
+              }
+
+              function displayData(contents) {
+                      // Display data in labels
+                      const lines = contents.split("\n");
+                      const msd = lines[0].trim();
+                      const vehcile = lines[1].trim();
+                      const activate = lines[2].trim();
+    const call = lines[3].trim();
+                      const position = lines[4].trim();
+    const type = lines[5].trim();
+                      const tank = lines[6].trim();
+    const time = lines[7].trim();
+    const latitude = lines[8].trim();
+    const longitude = lines[9].trim();
+                      const direction = lines[10].trim();
+                      const passengers = lines[11].trim();
+
+                      document.getElementById("msd").value = msd;
+                      document.getElementById("vehcile").value = vehcile;
+                      document.getElementById("activate").value = activate;
+    document.getElementById("call").value = call;
+                      document.getElementById("position").value = position;
+    document.getElementById("type").value = type;
+                      document.getElementById("tank").value = tank;
+    document.getElementById("time").value = time;
+    document.getElementById("latitude").value = latitude;
+    document.getElementById("longitude").value = longitude;
+                      document.getElementById("direction").value = direction;
+                      document.getElementById("passengers").value = [passengers];
+
+              }
+      </script>
+
+
+<!-- <body onload="initMap()"> -->
+       
+
+
+</body>
+ 
+</html>
+

@@ -1,5 +1,6 @@
 import paho.mqtt.client as mqtt
 import can
+import time
 
 from enum import Enum, auto
 from queue import Queue
@@ -184,8 +185,10 @@ class StateMachine:
             self.stateExit = True
             
         elif self.currentEventMessage.event == Event.etherFrame_ecall_recived:
-            message = can.Message(arbitration_id=CAN_MSG_SOS_ID, data=[CAN_MSG_SOS_DATA_ECALL], is_extended_id=False)
-            self.context.bus.send(message)
+            message1 = can.Message(arbitration_id=CAN_MSG_DMS_ID, data=[CAN_MSG_DMS_DATA_SLEEP], is_extended_id=False)
+            message2 = can.Message(arbitration_id=CAN_MSG_SOS_ID, data=[CAN_MSG_SOS_DATA_ECALL], is_extended_id=False)
+            self.context.bus.send(message1)
+            self.context.bus.send(message2)
         
         elif self.currentEventMessage.event == Event.etherFrame_end_recived:
             message = can.Message(arbitration_id=CAN_MSG_SOS_ID, data=[CAN_MSG_SOS_DATA_END], is_extended_id=False)
@@ -207,8 +210,10 @@ class StateMachine:
         
         elif self.currentEventMessage.event == Event.canFrame_bcall_recived:
             self.context.client.publish(TOPIC_SOS, MESSAGE_BCALL)
-            message = can.Message(arbitration_id=CAN_MSG_SOS_ID, data=[CAN_MSG_SOS_DATA_BCALL], is_extended_id=False)
-            self.context.bus.send(message)
+            message1 = can.Message(arbitration_id=CAN_MSG_SOS_ID, data=[CAN_MSG_SOS_DATA_BCALL], is_extended_id=False)
+            message2 = can.Message(arbitration_id=CAN_MSG_DMS_ID, data=[CAN_MSG_DMS_DATA_SLEEP], is_extended_id=False)
+            self.context.bus.send(message1)
+            self.context.bus.send(message2)
             
         elif self.currentEventMessage.event == Event.status:
             self.context.client.publish(TOPIC_STATUS_PROCESS, MESSAGE_STATUS_ACTIVE)

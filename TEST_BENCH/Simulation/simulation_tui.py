@@ -6,42 +6,61 @@ import paho.mqtt.client as mqtt
 import time
 import os
 
+
+# I DONT' WANT TO QUEUE A STREAM !!!!!!!
+
 BROKER_ADDRESS                  = "192.168.1.11"
 BROKER_PORT                     = 1883
 
 PROCESS_NAME_VIDEO              = "video"
 PROCESS_NAME_ECALL              = "ecall"
 PROCESS_NAME_ADR                = "adr"
-PROCESS_NAME_BLACK_BOX          = "black_box"
+PROCESS_NAME_BLACK_BOX_VIDEO    = "black_box_video"
 PROCESS_NAME_SENSORS            = "sensors"
 PROCESS_NAME_SIGN               = "sign"
 PROCESS_NAME_CAN                = "can"
+PROCESS_NAME_AUDIO_MOBILE       = "audio_mobile"
+PROCESS_NAME_AUDIO_MANGER       = "audio_manger"
+PROCESS_NAME_BLACK_BOX_AUDIO    = "black_box_audio"
+PROCESS_NAME_BLACK_BOX_SENSORS  = "black_box_sensors"
+PROCESS_NAME_AUDIO_PLAYBACK     = "audio_playback"
+
 
 
 # TODO: store them in an array and fix the simulation/cmd/
-TOPIC_CMD_ECALL                 = "cmd/" + PROCESS_NAME_ECALL
-TOPIC_CMD_ADR                   = "cmd/" + PROCESS_NAME_ADR
-TOPIC_CMD_BLACK_BOX             = "cmd/" + PROCESS_NAME_BLACK_BOX
-TOPIC_CMD_SENSORS               = "cmd/" + PROCESS_NAME_SENSORS
-TOPIC_CMD_VIDEO                 = "cmd/" + PROCESS_NAME_VIDEO
-TOPIC_CMD_SIGN                  = "cmd/" + PROCESS_NAME_SIGN
-TOPIC_CMD_CAN                   = "cmd/" + PROCESS_NAME_CAN
-TOPIC_CMD                       = "cmd"
+TOPIC_CMD_ECALL                         = "cmd/" + PROCESS_NAME_ECALL
+TOPIC_CMD_ADR                           = "cmd/" + PROCESS_NAME_ADR
+TOPIC_CMD_BLACK_BOX_VIDEO               = "cmd/" + PROCESS_NAME_BLACK_BOX_VIDEO
+TOPIC_CMD_SENSORS                       = "cmd/" + PROCESS_NAME_SENSORS
+TOPIC_CMD_VIDEO                         = "cmd/" + PROCESS_NAME_VIDEO
+TOPIC_CMD_SIGN                          = "cmd/" + PROCESS_NAME_SIGN
+TOPIC_CMD_CAN                           = "cmd/" + PROCESS_NAME_CAN
+TOPIC_CMD_AUDIO_MOBILE                  = "cmd/" + PROCESS_NAME_AUDIO_MOBILE
+TOPIC_CMD_AUDIO_MANGER                  = "cmd/" + PROCESS_NAME_AUDIO_MANGER
+TOPIC_CMD_BLACK_BOX_AUDIO               = "cmd/" + PROCESS_NAME_BLACK_BOX_AUDIO
+TOPIC_CMD_BLACK_BOX_SENSORS             = "cmd/" + PROCESS_NAME_BLACK_BOX_SENSORS
+TOPIC_CMD_AUDIO_PLAYBACK                = "cmd/" + PROCESS_NAME_AUDIO_PLAYBACK
+TOPIC_CMD                               = "cmd"
 
-MESSAGE_START                   = "start"
-MESSAGE_KILL                    = "kill"
-MESSAGE_PAUSE				    = "pause"
-MESSAGE_RESUME				    = "resume"
-MESSAGE_TERMINATE               = "terminate"
-MESSAGE_STATUS                  = "status"
+MESSAGE_START                           = "start"
+MESSAGE_KILL                            = "kill"
+MESSAGE_PAUSE				            = "pause"
+MESSAGE_RESUME				            = "resume"
+MESSAGE_TERMINATE                       = "terminate"
+MESSAGE_STATUS                          = "status"
 
-TOPIC_STATUS_PROCESS_ECALL	    = "status/" + PROCESS_NAME_ECALL
-TOPIC_STATUS_PROCESS_ADR	    = "status/" + PROCESS_NAME_ADR
-TOPIC_STATUS_PROCESS_BLACK_BOX  = "status/" + PROCESS_NAME_BLACK_BOX
-TOPIC_STATUS_PROCESS_SENSORS    = "status/" + PROCESS_NAME_SENSORS
-TOPIC_STATUS_PROCESS_VIDEO	    = "status/" + PROCESS_NAME_VIDEO
-TOPIC_STATUS_PROCESS_SIGN	    = "status/" + PROCESS_NAME_SIGN
-TOPIC_STATUS_PROCESS_CAN	    = "status/" + PROCESS_NAME_CAN
+TOPIC_STATUS_PROCESS_ECALL	            = "status/" + PROCESS_NAME_ECALL
+TOPIC_STATUS_PROCESS_ADR	            = "status/" + PROCESS_NAME_ADR
+TOPIC_STATUS_PROCESS_BLACK_BOX_VIDEO    = "status/" + PROCESS_NAME_BLACK_BOX_VIDEO
+TOPIC_STATUS_PROCESS_SENSORS            = "status/" + PROCESS_NAME_SENSORS
+TOPIC_STATUS_PROCESS_VIDEO	            = "status/" + PROCESS_NAME_VIDEO
+TOPIC_STATUS_PROCESS_SIGN	            = "status/" + PROCESS_NAME_SIGN
+TOPIC_STATUS_PROCESS_CAN	            = "status/" + PROCESS_NAME_CAN
+TOPIC_STATUS_PROCESS_AUDIO_MOBILE 	    = "status/" + PROCESS_NAME_AUDIO_MOBILE
+TOPIC_STATUS_PROCESS_AUDIO_MANGER  	    = "status/" + PROCESS_NAME_AUDIO_MANGER
+TOPIC_STATUS_PROCESS_BLACK_BOX_AUDIO  	        = "status/" + PROCESS_NAME_BLACK_BOX_AUDIO
+TOPIC_STATUS_PROCESS_BLACK_BOX_SENSORS  	    = "status/" + PROCESS_NAME_BLACK_BOX_SENSORS
+TOPIC_STATUS_PROCESS_AUDIO_PLAYBACK 	        = "status/" + PROCESS_NAME_AUDIO_PLAYBACK
 
 MESSAGE_STATUS_ACTIVE           = "active"
 MESSAGE_STATUS_DEAD             = "dead"
@@ -100,11 +119,16 @@ class Event(Enum):
     received_sos = auto()
     received_status_ecall = auto()
     received_status_adr = auto()
-    received_status_black_box = auto()
+    received_status_black_box_video = auto()
     received_status_sensors = auto()
     received_status_video = auto()
     received_status_sign = auto()
     received_status_can = auto()
+    received_status_audio_manger = auto()
+    received_status_audio_mobile = auto()
+    received_status_black_box_audio = auto()
+    received_status_black_box_sensors = auto()
+    received_status_audio_playback = auto()
     received_adr = auto()
     
 
@@ -127,9 +151,14 @@ class stateMachineContext:
         self.status_ecall = None
         self.status_adr = None
         self.status_can = None
-        self.status_black_box = None
+        self.status_black_box_video = None
         self.status_video = None
         self.status_sign = None
+        self.status_audio_manger = None
+        self.status_audio_mobile = None
+        self.status_black_box_audio = None
+        self.status_black_box_sensors = None
+        self.status_audio_playback = None
 
         self.data_adr = None
         self.data_sign = None
@@ -178,8 +207,8 @@ class StateMachine:
         elif index == str(Index.PROCESS_ADR.value):
             self.context.client.publish(TOPIC_CMD_ADR, MESSAGE)  
             
-        elif index == str(Index.PROCESS_BBOX.value):
-            self.context.client.publish(TOPIC_CMD_BLACK_BOX, MESSAGE)
+        elif index == str(Index.PROCESS_BLACK_BOX_VIDEO.value):
+            self.context.client.publish(TOPIC_CMD_BLACK_BOX_VIDEO, MESSAGE)
            
         elif index == str(Index.PROCESS_CAN.value):
             self.context.client.publish(TOPIC_CMD_CAN, MESSAGE) 
@@ -195,6 +224,21 @@ class StateMachine:
             
         elif index == str(Index.PROCESS_VIDEO.value):
             self.context.client.publish(TOPIC_CMD_VIDEO, MESSAGE)
+            
+        elif index == str(Index.PROCESS_AUDIO_MOBILE.value):
+            self.context.client.publish(TOPIC_CMD_AUDIO_MOBILE, MESSAGE)
+            
+        elif index == str(Index.PROCESS_AUDIO_MANGER.value):
+            self.context.client.publish(TOPIC_CMD_AUDIO_MANGER, MESSAGE)
+            
+        elif index == str(Index.PROCESS_BLACK_BOX_AUDIO.value):
+            self.context.client.publish(TOPIC_CMD_BLACK_BOX_AUDIO, MESSAGE)
+        
+        elif index == str(Index.PROCESS_BLACK_BOX_SENSORS.value):
+            self.context.client.publish(TOPIC_CMD_BLACK_BOX_SENSORS, MESSAGE)
+        
+        elif index == str(Index.PROCESS_AUDIO_PLAYBACK.value):
+            self.context.client.publish(TOPIC_CMD_AUDIO_PLAYBACK, MESSAGE)
 
 
     def state_active_handler(self):
@@ -282,8 +326,8 @@ class StateMachine:
             render_TUI(self.context)
           
             
-        elif self.currentEventMessage.event == Event.received_status_black_box:
-            self.context.status_black_box = self.currentEventMessage.data.decode()
+        elif self.currentEventMessage.event == Event.received_status_black_box_video:
+            self.context.status_black_box_video = self.currentEventMessage.data.decode()
             render_TUI(self.context)
      
             
@@ -302,6 +346,27 @@ class StateMachine:
           
         elif self.currentEventMessage.event == Event.received_status_can:
             self.context.status_can = self.currentEventMessage.data.decode()
+            render_TUI(self.context)
+            
+        elif self.currentEventMessage.event == Event.received_status_audio_manger:
+            self.context.status_audio_manger = self.currentEventMessage.data.decode()
+            render_TUI(self.context)
+
+
+        elif self.currentEventMessage.event == Event.received_status_audio_mobile:
+            self.context.status_audio_mobile = self.currentEventMessage.data.decode()
+            render_TUI(self.context)
+            
+        elif self.currentEventMessage.event == Event.received_status_black_box_audio:
+            self.context.status_black_box_audio = self.currentEventMessage.data.decode()
+            render_TUI(self.context)
+            
+        elif self.currentEventMessage.event == Event.received_status_black_box_sensors:
+            self.context.status_black_box_sensors = self.currentEventMessage.data.decode()
+            render_TUI(self.context)
+            
+        elif self.currentEventMessage.event == Event.received_status_audio_playback:
+            self.context.status_audio_playback = self.currentEventMessage.data.decode()
             render_TUI(self.context)
 
         elif self.currentEventMessage.event == Event.received_adr:
@@ -348,14 +413,11 @@ class StateMachine:
         if self.currentEventMessage.event == Event.received_status_ecall:
             self.context.status_ecall = self.currentEventMessage.data.decode()
             
-            
         elif self.currentEventMessage.event == Event.received_status_adr:
             self.context.status_adr = self.currentEventMessage.data.decode()
-           
             
-        elif self.currentEventMessage.event == Event.received_status_black_box:
-            self.context.status_black_box = self.currentEventMessage.data.decode()
-            
+        elif self.currentEventMessage.event == Event.received_status_black_box_video:
+            self.context.status_black_box_video = self.currentEventMessage.data.decode()
             
         elif self.currentEventMessage.event == Event.received_status_sensors:
             self.context.status_sensors = self.currentEventMessage.data.decode()
@@ -368,6 +430,21 @@ class StateMachine:
       
         elif self.currentEventMessage.event == Event.received_status_can:
             self.context.status_can = self.currentEventMessage.data.decode()
+            
+        elif self.currentEventMessage.event == Event.received_status_audio_manger:
+            self.context.status_audio_manger = self.currentEventMessage.data.decode()
+
+        elif self.currentEventMessage.event == Event.received_status_audio_mobile:
+            self.context.status_audio_mobile = self.currentEventMessage.data.decode()
+            
+        elif self.currentEventMessage.event == Event.received_status_black_box_audio:
+            self.context.status_black_box_audio = self.currentEventMessage.data.decode()
+            
+        elif self.currentEventMessage.event == Event.received_status_black_box_sensors:
+            self.context.status_black_box_sensors = self.currentEventMessage.data.decode()
+            
+        elif self.currentEventMessage.event == Event.received_status_audio_playback:
+            self.context.status_audio_playback = self.currentEventMessage.data.decode()
             
         elif self.currentEventMessage.event == Event.refresh_timeout:
             self.currentState = State.active
@@ -401,9 +478,14 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe(TOPIC_STATUS_PROCESS_ECALL)
     client.subscribe(TOPIC_STATUS_PROCESS_ADR)
     client.subscribe(TOPIC_STATUS_PROCESS_CAN)
-    client.subscribe(TOPIC_STATUS_PROCESS_BLACK_BOX)
+    client.subscribe(TOPIC_STATUS_PROCESS_BLACK_BOX_VIDEO)
     client.subscribe(TOPIC_STATUS_PROCESS_VIDEO)
     client.subscribe(TOPIC_STATUS_PROCESS_SIGN)
+    client.subscribe(TOPIC_STATUS_PROCESS_AUDIO_MANGER)
+    client.subscribe(TOPIC_STATUS_PROCESS_AUDIO_MOBILE)
+    client.subscribe(TOPIC_STATUS_PROCESS_BLACK_BOX_AUDIO)
+    client.subscribe(TOPIC_STATUS_PROCESS_BLACK_BOX_SENSORS)
+    client.subscribe(TOPIC_STATUS_PROCESS_AUDIO_PLAYBACK)
 
     client.subscribe(TOPIC_ADR)
 
@@ -429,14 +511,29 @@ def on_message(client, userdata, msg):
     elif topic == TOPIC_STATUS_PROCESS_CAN:
         tempEventMessage.event = Event.received_status_can
         
-    elif topic == TOPIC_STATUS_PROCESS_BLACK_BOX:
-        tempEventMessage.event = Event.received_status_black_box
+    elif topic == TOPIC_STATUS_PROCESS_BLACK_BOX_VIDEO:
+        tempEventMessage.event = Event.received_status_black_box_video
         
     elif topic == TOPIC_STATUS_PROCESS_VIDEO:
         tempEventMessage.event = Event.received_status_video
         
     elif topic == TOPIC_STATUS_PROCESS_SIGN:
         tempEventMessage.event = Event.received_status_sign
+        
+    elif topic == TOPIC_STATUS_PROCESS_AUDIO_MOBILE:
+        tempEventMessage.event = Event.received_status_audio_mobile
+        
+    elif topic == TOPIC_STATUS_PROCESS_AUDIO_MANGER:
+        tempEventMessage.event = Event.received_status_audio_manger
+        
+    elif topic == TOPIC_STATUS_PROCESS_BLACK_BOX_AUDIO:
+        tempEventMessage.event = Event.received_status_black_box_audio
+        
+    elif topic == TOPIC_STATUS_PROCESS_BLACK_BOX_SENSORS:
+        tempEventMessage.event = Event.received_status_black_box_sensors
+        
+    elif topic == TOPIC_STATUS_PROCESS_AUDIO_PLAYBACK:
+        tempEventMessage.event = Event.received_status_audio_playback
         
     elif topic == TOPIC_ADR:
         tempEventMessage.event = Event.received_adr
@@ -463,11 +560,18 @@ def re_init(context):
     context.status_ecall = "-"
     context.status_adr = "-"
     context.status_can = "-"
-    context.status_black_box = "-"
+    context.status_black_box_video = "-"
     context.status_video = "-"
     context.status_sign = "-"
-    context.data_adr = "-"
+    context.status_audio_manger = "-"
+    context.status_audio_mobile = "-"
+
+    context.status_black_box_audio = "-"
+    context.status_black_box_sensors = "-"
+    context.status_audio_playback = "-"
+    
     context.data_sign = "-"
+    context.data_adr = "-"
 
 
 def input_thread():
@@ -545,41 +649,65 @@ def print_welcome():
     print("D : [TEST_ONLY] Distracted Driver")
     print("Z : [TEST_ONLY] Sleeping Driver")
     print("Q : refresh")
-    print("--------------------------------------------" )    
+    print("---------------------------------------------")  
+    print()
 
 
 
 class Index(Enum):
     PROCESS_ECALL = auto()
     PROCESS_ADR = auto()
-    PROCESS_BBOX = auto()
-    PROCESS_SENSORS = auto()
-    PROCESS_VIDEO = auto()
+    PROCESS_BLACK_BOX_VIDEO = auto()
+    PROCESS_BLACK_BOX_AUDIO = auto()
+    PROCESS_BLACK_BOX_SENSORS = auto()
+    PROCESS_AUDIO_MOBILE = auto()
     PROCESS_SIGN = auto()
     PROCESS_CAN = auto()
+    PROCESS_SENSORS = auto()
+    PROCESS_VIDEO = auto()
+    PROCESS_AUDIO_MANGER = auto()
+    PROCESS_AUDIO_PLAYBACK = auto()
     
 
 
 def print_status(context):
-    print("--------------------------------------------" ) 
-    print("<" + str(Index.PROCESS_ECALL.value)    + "> PROCESS ECALL   : " + context.status_ecall)
-    print("<" + str(Index.PROCESS_ADR.value)      + "> PROCESS ADR     : " + context.status_adr)
-    print("<" + str(Index.PROCESS_BBOX.value)     + "> PROCESS BBOX    : " + context.status_black_box)
-    print("<" + str(Index.PROCESS_SENSORS.value)  + "> PROCESS SENSORS : " + context.status_sensors)
-    print("<" + str(Index.PROCESS_VIDEO.value)    + "> PROCESS VIDEO   : " + context.status_video)
-    print("<" + str(Index.PROCESS_SIGN.value)     + "> PROCESS SIGN    : " + context.status_sign)
-    print("<" + str(Index.PROCESS_CAN.value)      + "> PROCESS CAN     : " + context.status_can)
+    print("<" + str(Index.PROCESS_ECALL.value)             + ">  PROCESS ECALL              : " + context.status_ecall)
+    print("<" + str(Index.PROCESS_ADR.value)               + ">  PROCESS ADR                : " + context.status_adr)
+    print("<" + str(Index.PROCESS_BLACK_BOX_VIDEO.value)   + ">  PROCESS BLACK BOX VIDEO    : " + context.status_black_box_video)
+    print("<" + str(Index.PROCESS_BLACK_BOX_AUDIO.value)   + ">  PROCESS BLACK BOX AUDIO    : " + context.status_black_box_audio)
+    print("<" + str(Index.PROCESS_BLACK_BOX_SENSORS.value) + ">  PROCESS BLACK BOX SENSORS  : " + context.status_black_box_sensors)
+    print("<" + str(Index.PROCESS_AUDIO_MOBILE.value)      + ">  PROCESS AUDIO MOBILE       : " + context.status_audio_mobile)
+    print()
+
+    
+
+    
+    print("<" + str(Index.PROCESS_SIGN.value)              + ">  PROCESS SIGN               : " + context.status_sign)
+    print("<" + str(Index.PROCESS_CAN.value)               + ">  PROCESS CAN                : " + context.status_can)
+    print()
+    
+
+    
+    print("<" + str(Index.PROCESS_SENSORS.value)           + ">  PROCESS SENSORS            : " + context.status_sensors)
+    print("<" + str(Index.PROCESS_VIDEO.value)             + "> PROCESS VIDEO              : " + context.status_video)
+    print("<" + str(Index.PROCESS_AUDIO_MANGER.value)      + "> PROCESS AUDIO MANGER       : " + context.status_audio_manger)
+    print("<" + str(Index.PROCESS_AUDIO_PLAYBACK.value)    + "> PROCESS AUDIO PLAYBACK     : " + context.status_audio_playback)
+    print()
+ 
     
 def print_data(context):
-    print("--------------------------------------------" ) 
     print("LAST DATA ADR         : " + context.data_adr)
     print("LAST DATA SIGN        : " + context.data_sign)
+    print()
+
 
 def render_TUI(context):
     os.system("clear")
+    print_welcome()
+    
     print_status(context)
     print_data(context)
-    print_welcome()
+    
 
 def main():
     context = stateMachineContext()

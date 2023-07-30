@@ -1,6 +1,9 @@
 # Telematics Control Unit and Driver Safety in Modern Vehicles
 This is our Graduation Project Repository For the year 2023
 
+# Team Photo
+![Alt Text](./_other/img/team_photo.JPG)
+
 # Supervisor:
 - Dr. Mohamed M. El-Dakroury
 - Eng. Bahaa Sehsah

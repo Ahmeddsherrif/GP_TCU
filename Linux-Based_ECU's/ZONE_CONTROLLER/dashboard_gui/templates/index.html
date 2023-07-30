@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <style>
+    * {
+      margin: auto;
+      padding: auto;
+      box-sizing: border-box;
+      background-color: black;
+    }
+    .box {
+      width: 350px;
+      height: 300px;
+      position: absolute;
+      top: 10%;
+      left: 1%;
+      /* position: relative;
+      display: flex;
+      justify-content: right;
+      align-items: center;
+      flex-wrap: nowrap; */
+    }
+
+    .I1 {
+      position: absolute;
+      top: 15%;
+      left: 30%;
+    }
+
+    .I2 {
+      position: absolute;
+      top: 15%;
+      left: 50%;
+    }
+
+    .I3 {
+      position: absolute;
+      top: 15%;
+      left: 70%;
+    }
+
+    button {
+      display: inline-flex;
+      height: 40px;
+      padding: 0.3rem 0.5rem 0.3rem 0.5rem;
+      cursor: pointer;
+      /* margin: 10px 20px 10px 20px; */
+      border: none;
+      background: #f10d0d;
+      outline: none;
+      border-radius: 5px;
+      overflow: hidden;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 20px;
+      font-weight: 500;
+    }
+    .button:hover {
+      background: #e63030;
+    }
+    .button:active {
+      background: #7db3cf;
+    }
+    .button__text {
+      display: inline-flex;
+      align-items: center;
+      padding: 0 24px;
+      color: #fff;
+      height: 100%;
+    }
+    h2 {
+      font-family: Arial, Helvetica, sans-serif;
+      color: white;
+      position: relative;
+      margin-top: 30px;
+      position: absolute;
+      left: 8%;
+    }
+    #Speedometer {
+      width: 250px;
+      height: 250px;
+      border: 2px solid gray;
+      border-radius: 50%;
+      box-shadow: 0px 0px 10px 5px gray;
+      background-image: url("{{ url_for('static', filename='images/speedometer.png') }}"); /* Ensure the path to the image is correct */
+      background-size: 100%, 100%;
+      background-repeat: no-repeat;
+      position: relative;
+    }
+    #needle {
+      width: 3px;
+      height: 60px;
+      border: 1px solid white;
+      border-radius: 5px;
+      background-color: #89ff00;
+      position: absolute;
+      top: 50%; /* Set the needle to the center vertically */
+      left: 50%; /* Set the needle to the center horizontally */
+      transform-origin: bottom;
+      transform: translate(-50%, -100%) rotate(-140deg); /* Adjust the needle position */
+      transition: 2s;
+    }
+    #point {
+      width: 20px;
+      height: 20px;
+      position: absolute;
+      border: 1px solid white;
+      border-radius: 50%;
+      bottom: -10px;
+      left: -9px;
+      background-color: #89ff00;
+      transition: 2s;
+    }
+    #logo {
+      position: absolute;
+      border: 1px solid white;
+      bottom: 65px;
+      left: 100px;
+      padding: 2px 5px 2px 5px;
+      border-radius: 5px;
+      font-family: Arial Green;
+      color: white;
+      background-color: #4f7a36;
+      box-shadow: inset 0px 0px 4px 0px #83ff00;
+      z-index: 1;
+    }
+    #speedValue {
+      position: absolute;
+      top: 45%; /* Adjust the vertical position above the needle */
+      left: 50%; /* Center the speed value horizontally */
+      transform: translateX(-50%);
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+    }
+  </style>
+  <head>
+    <meta charset="utf-8" />
+    <title>Speedometer</title>
+  </head>
+  <body>
+    <h2>Speedometer</h2>
+    <div class="box">
+      <div id="Speedometer">
+        <div id="needle">
+          <div id="point"></div>
+        </div>
+        <div id="logo">km/h</div>
+      </div>
+      <div id="speedValue">0</div>
+    </div>
+
+    <!-- -------------------------------------------- -->
+    <div class="I1">
+      <img src="{{ url_for('static', filename='images/sos_off.jpg') }}" id="image_sos" width="100px" height="150px" />
+    </div>
+
+    <div class="I2">
+      
+      <img src="{{ url_for('static', filename='images/airbag_off.jpg') }}" id="image_airbag" width="130px" height="150px" />
+    </div>
+
+    <div class="I3">
+      <img src="{{ url_for('static', filename='images/seatbelt_off.jpg') }}" id="image_seatbelt" width="100px" height="150px" />
+    </div>
+
+
+    <script>
+
+      function update_speed(speed){
+        var speedValue = parseFloat(speed);
+        var percentage = speedValue / 180;
+        var rotation = -140 + percentage * 280;
+        document.getElementById('needle').style.transform = 'translate(-50%, -100%) rotate(' + rotation + 'deg)';
+        document.getElementById('speedValue').textContent = speedValue;
+      }
+      // -------------------------------------------
+      function sos_on() {
+        var img = document.getElementById('image_sos');
+        img.src = "{{ url_for('static', filename='images/sos_on.jpg') }}";
+      }
+
+      function sos_off() {
+        var img = document.getElementById('image_sos');
+        img.src = "{{ url_for('static', filename='images/sos_off.jpg') }}";
+      }
+
+      function airbag_on() {
+        var img = document.getElementById('image_airbag');
+        img.src = "{{ url_for('static', filename='images/airbag_on.jpg') }}";
+        
+      }
+
+      function airbag_off() {
+        var img = document.getElementById('image_airbag');
+        img.src = "{{ url_for('static', filename='images/airbag_off.jpg') }}";
+      }
+
+      function seatbelt_on() {
+        var img = document.getElementById('image_seatbelt');
+        img.src = "{{ url_for('static', filename='images/seatbelt_on.jpg') }}";
+      }
+
+      function seatbelt_off() {
+        var img = document.getElementById('image_seatbelt');
+        img.src = "{{ url_for('static', filename='images/seatbelt_off.jpg') }}";
+      }
+
+      
+      function updateDashboard() {
+        fetch('/get_dashboard')
+        .then(response => response.json())
+        .then(data => {
+          const {speed, sos, airbag, seatbelt} = data;
+
+          console.log("hello")
+          update_speed(speed);
+  
+  
+          if(sos == 1){
+            sos_on();
+          } else if (sos == 0){
+            sos_off();
+          }
+  
+          if(airbag == 1){
+            airbag_on();
+          } else if (airbag == 0){
+            airbag_off();
+          }
+  
+           if(seatbelt == 1){
+            seatbelt_on();
+          } else if (seatbelt == 0){
+            seatbelt_off();
+          }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+      }
+
+
+
+
+
+      // Initial update
+      updateDashboard();
+
+      // Update every 30 seconds
+      setInterval(updateDashboard, 100);
+    </script>
+  </body>
+</html>

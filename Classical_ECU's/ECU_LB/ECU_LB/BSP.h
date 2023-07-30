@@ -1,0 +1,44 @@
+/*
+ * BSP.h
+ *
+ * Created: 7/29/2023 2:09:05 AM
+ *  Author: Master
+ */ 
+
+
+#ifndef BSP_H_
+#define BSP_H_
+
+enum Signals {
+	TIMEOUT_LED_RED_SIG = USER_SIG,
+	SWITCH_PRESSED_SIG,
+	SWITCH_RELEASED_SIG,
+	CAN_FRAME_RECIVED_SIG,
+	TIMEOUT_LED_YELLOW_SIG,
+	INIT_LED_RED_BLINK_SIG
+};
+
+
+#define SWITCH_PRESSED		0
+#define SWITCH_NOT_PRESSED	1
+
+extern Active *AO_blinkyButton;
+typedef struct can_frame Can_frame_t;
+
+void BSP_init(void);
+void BSP_start(void);
+void BSP_led_red_on(void);
+void BSP_led_red_off(void);
+void BSP_led_yellow_on(void);
+void BSP_led_yellow_off(void);
+void BSP_led_green_on(void);
+void BSP_led_green_off(void);
+void BSP_buzzer_on(void);
+void BSP_buzzer_off(void);
+
+int BSP_get_switch(void);
+
+void BSP_send_can_frame(Can_frame_t * frame);
+int BSP_get_can_frame(Can_frame_t *frame);
+
+#endif /* BSP_H_ */
